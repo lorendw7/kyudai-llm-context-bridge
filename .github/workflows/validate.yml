@@ -1,0 +1,25 @@
+name: Validate repository
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Check Go formatting
+        shell: bash
+        run: test -z "$(gofmt -l .)"
+      - name: Run Go tests
+        run: go test ./... -count=1
+      - name: Check documentation, website, and common credential patterns
+        run: python3 scripts/check_repository.py
+      - name: Check JavaScript syntax
+        run: node --check website/assets/demo.js

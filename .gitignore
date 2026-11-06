@@ -1,0 +1,40 @@
+# Secrets and personal material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+secrets/
+private/
+receipts/
+
+# Local environments and runtime state
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+.cache/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Datasets, model weights and generated experiment outputs
+/presentations/
+data/
+models/
+weights/
+outputs/
+*.pptx
+*.safetensors
+*.gguf
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
