@@ -5,7 +5,7 @@
 ## 現在の方針 / Current decisions
 
 - A案：Goブリッジ + Ollama + Mem0 OSS。原型作成の指導教員承認、玄界アカウント・研究室計算枠の保有は利用者の報告による。
-- 原型コードは利用者本人がすべて実装する。assistantは会話内で中国語・英語の説明、課題、レビューを提供し、明示的な変更依頼なしに代筆しない。文書とサイトは日英。
+- 全機能コード（Go、Python memory worker、運用script、実験runner）は利用者本人が実装する。テストコード、合成fixture、test-only fake、検証harnessは利用者の追加依頼によりassistantが担当する。assistantは会話内で中国語・英語の説明、課題、レビューを提供し、機能コードやその修正を代筆しない。文書とサイトは日英。
 - 複数研究室が共有するのは推論資源。会話・記憶・権限は分離する。初回は合成データとローカル2モデルを使用し、商用APIは別枠。
 - ソフトウェア・必須依存はOSS。正確な配布物、モデル、依存ライセンスとhashを確認する。CUDA等の玄界GPU基盤の適用範囲は未確認。導入、大型取得、遠隔実行は別途許可された範囲で行う。
 - 公開対象は現在の設計、コード、検証、日英サイト。旧演示稿・生成source・作業履歴はローカル専用とし、GitHubに含めない。mainは今回の依頼により履歴を置き換え、現在のsnapshotから再開する。
@@ -42,7 +42,36 @@
 
 ## 工数見積り / Effort estimate
 
-本人が学習しながら実装する場合の計画値。週20時間を前提に、最初の1週間の実績で更新します。
+本人が学習しながら全機能を実装し、assistantがテストコードを担当する場合の計画値。週20時間を前提に、最初の2授業と1週間の実績で更新します。授業は会話内の説明・演習・レビューを一組とし、説明とレビュー約60–90分、本人実装・修正を含め通常約3–6時間を想定します。重い連携課題は分割できます。
+
+### 授業計画 / Lesson plan
+
+ローカル原型は16授業、玄界・最終評価・報告まで追加4授業を提案します。第10授業で最初のローカルdemo、第16授業で研究用原型の受入を目指します。下表は上記作業一覧の授業への対応であり、完了管理は上記checkboxだけで行います。環境導入と実行は許可・ライセンス確認を前提とします。
+
+| Lesson | User-owned functional deliverable | Acceptance evidence / Assistant-owned tests |
+| --- | --- | --- |
+| 1 | Session, Message, ownership and source contracts | Synthetic examples distinguish source, derived memory, correction and deletion |
+| 2 | ModelClient, MemoryClient, SessionRepository, TokenCounter and versioned API contracts | Contract fixtures cover valid requests and normalized errors |
+| 3 | Session creation and message HTTP handlers | Validation, request IDs and response schemas |
+| 4 | Local credential resolution and ownership checks | Cross-user/lab access denied; body-supplied identity rejected |
+| 5 | Model selection and switch orchestration | Test-only adapters demonstrate A → B → A without changing session scope |
+| 6 | Turn lifecycle, cancellation and failure states | Timeout/cancellation and duplicate-request contract tests |
+| 7 | Pinned local configuration and Ollama adapter | License/artifact record; authorized real response and error checks |
+| 8 | Authenticated Python worker and scoped Mem0 operations | Go–Python contract checks, source mapping and local dependency configuration |
+| 9 | Memory write/search/update and budgeted context assembly | Corrections, untrusted retrieved text, exact token budgets and scope isolation |
+| 10 | Integrated two-model local demonstration | Synthetic correction survives A → B → A; unauthorized user denied; outbound access blocked |
+| 11 | Persistent source records and restart recovery | Restart, interrupted write and request replay tests |
+| 12 | Memory-update failure reconciliation | Saved answer survives partial failure; next turn blocked until recovery |
+| 13 | Export, deletion and revision guards | Source/derived stores and checkpoints covered; late writes and deletion races tested |
+| 14 | Full-history and rolling-summary policies alongside Mem0 | Comparable inputs, explicit overflow and isolated policy namespaces |
+| 15 | Experiment runner and per-stage metrics | Synthetic accounting fixtures separate answer input, memory/summary, retries and model load |
+| 16 | Reproducible startup and development-case demonstration | Regression suite and authorized local integration checks; failures and remaining limits recorded |
+| 17 | Genkai packaging and job lifecycle | Authorized environment audit and bounded smoke test; readiness and cleanup verified |
+| 18 | Development pilot and frozen evaluation configuration | Pilot costs recorded; independent final cases, rubric and hashes fixed before evaluation |
+| 19 | Final evaluation execution | Fixed comparisons, isolation/deletion suite, missing runs and negative results retained |
+| 20 | Japanese/English research report and reproduction guide | Requirements, proposals, vendor claims and measured results clearly separated |
+
+第16授業の原型範囲はローカル推論・記憶、認証と隔離、保存と回復、export/delete、3方式の比較、計測です。常時運用サービス、学内SSO、一般向けUIは含みません。assistantは各授業の契約に合わせてテストを段階的に作成し、本人が機能の修正を行います。最終評価ケースは開発用回帰テストへ流用しません。
 
 | 範囲 / Scope | 追加工数 / Incremental effort |
 | --- | --- |
@@ -51,4 +80,4 @@
 | 保存・回復・比較 / Persistence, recovery and controls | 20–36 h |
 | 玄界・評価・報告 / Genkai, evaluation and report | 24–48 h |
 
-合計80–140時間、約4–7週間。最初のローカルdemoは累積36–56時間、約2–3週間。監査、互換性、手戻り、申請・queue待ちで延びる可能性があり、納期保証ではありません。常時運用サービス、SSO、商用API、fine-tuningは含みません。
+第16授業までのローカル原型は累積56–92時間、約3–5週間。玄界・評価・報告を含む合計は80–140時間、約4–7週間。最初のローカルdemoは累積36–56時間、約2–3週間。監査、互換性、手戻り、申請・queue待ちで延びる可能性があり、納期保証ではありません。常時運用サービス、SSO、商用API、fine-tuningは含みません。

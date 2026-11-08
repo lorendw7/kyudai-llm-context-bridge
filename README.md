@@ -8,9 +8,9 @@ An independent research project originating in a Kyushu University RA project. I
 
 ## Current status
 
-**Route A selected — 2026-11-06: Go bridge + Ollama + Mem0 OSS.** The user reports supervisor approval and an existing Genkai account/allocation. The user writes all prototype code; the assistant teaches and reviews in Chinese and English in chat. Official documentation uses Japanese and English.
+**Route A selected — 2026-11-06: Go bridge + Ollama + Mem0 OSS.** The user reports supervisor approval and an existing Genkai account/allocation. The user writes all functional code; the assistant teaches and reviews in Chinese and English in chat and writes the test code and synthetic fixtures. Official documentation uses Japanese and English. The proposed course covers 16 lessons for the local research prototype and four additional lessons for Genkai, evaluation and reporting; acceptance criteria and estimates are in [PLAN.md](PLAN.md).
 
-Implemented: a localhost-only `GET /health` endpoint and its Go test. Model switching, memory, persistence and authentication are not implemented. The website uses fixed synthetic data. No project token savings or model-quality results have been measured.
+Implemented: a localhost-only `GET /health` endpoint, a basic `Message` record and constructor, and their Go tests. Session ownership, model switching, memory, persistence and authentication are not implemented. The website uses fixed synthetic data. No project token savings or model-quality results have been measured.
 
 ## Route A software architecture
 
@@ -113,7 +113,7 @@ python -m http.server 8000 --bind 127.0.0.1 --directory website
 | README.md | Current architecture and research design |
 | PLAN.md | Sole action checklist, acceptance criteria and estimate |
 | CONTRIBUTING.md / AGENTS.md | Learning method and collaboration rules |
-| cmd/bridge/ / go.mod | User-owned Go implementation and tests |
+| cmd/bridge/ / go.mod | User-owned Go functionality; assistant-maintained tests |
 | website/ | Buildless Japanese/English project website |
 | scripts/ / .github/workflows/ | Validation and GitHub Pages publication |
 | LICENSE / SECURITY.md | Licensing and sensitive-data policy |
@@ -122,7 +122,7 @@ Presentation archives, generated artifacts, private data, model weights, databas
 
 ## 日本語
 
-A案（Goブリッジ + Ollama + Mem0 OSS）を原型の実装ルートとして選択しました。現在の実装はlocalhostのhealth endpointとテストのみです。モデル切替・記憶・認証・性能は未実装／未測定です。利用者本人が原型コードをすべて実装し、assistantは会話内で中国語・英語の説明とレビューを行います。正式文書とサイトは日英で維持します。
+A案（Goブリッジ + Ollama + Mem0 OSS）を原型の実装ルートとして選択しました。現在の実装はlocalhostのhealth endpoint、基本的なMessage record／constructorとそのGoテストです。session所有権、モデル切替、記憶、永続化、認証、性能は未実装／未測定です。利用者本人が全機能コードを実装し、assistantはテストコードと合成fixtureを担当し、会話内で中国語・英語の説明とレビューを行います。ローカル原型16授業、玄界・評価・報告まで追加4授業を提案します。正式文書とサイトは日英で維持します。
 
 Goが会話・権限・文脈組立を管理し、PythonのMem0が記憶を処理し、Ollamaが推論を実行します。原会話を正本として保持し、記憶を派生情報として出典とともに追跡します。モデルA → B → Aで訂正を保持し、別利用者からのアクセスを拒否することが最初の到達点です。玄界では1ジョブ内の構成を検証し、全履歴・逐次要約・Mem0を固定条件で比較します。大学公式サービスではありません。
 
