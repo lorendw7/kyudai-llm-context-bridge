@@ -1,129 +1,101 @@
 # Kyudai LLM Context Bridge
 
-**Change the model. Carry the context. / モデルを切り替えても、文脈をつなぐ。**
+**モデルを切り替えても、文脈をつなぐ。 / Change the model. Carry the context.**
 
-[Website](https://lorendw7.github.io/kyudai-llm-context-bridge/) · [Plan](PLAN.md) · [Learning and contribution guide](CONTRIBUTING.md) · [MIT license](LICENSE)
+[公開サイト / Website](https://lorendw7.github.io/kyudai-llm-context-bridge/) · [作業計画 / Plan](PLAN.md) · [学習方法 / Learning guide](CONTRIBUTING.md) · [MIT](LICENSE)
 
-An independent research project originating in a Kyushu University RA project. It studies context continuity when users switch language models. Laboratories may share inference capacity; their conversations, memories and permissions remain separate. This is not an official university website or endorsed service.
+九州大学RAプロジェクトに由来する独立した研究リポジトリです。LLM切替時の文脈継続、記憶の正確さ、処理負担を調べます。大学公式サイト・公認サービスではありません。共有対象は推論資源であり、会話・記憶・権限は利用者ごとに分離します。
 
-## Current status
+This independent repository originates in a Kyushu University RA project. It studies context continuity, memory correctness and processing overhead when switching LLMs. It is not an official university website or endorsed service. Inference capacity may be shared; conversations, memories and permissions remain separate.
 
-**Route A selected — 2026-11-06: Go bridge + Ollama + Mem0 OSS.** The user reports supervisor approval and an existing Genkai account/allocation. The user writes all functional code; the assistant teaches and reviews in Chinese and English in chat and writes the test code and synthetic fixtures. Official documentation uses Japanese and English. The proposed course covers 16 lessons for the local research prototype and four additional lessons for Genkai, evaluation and reporting; acceptance criteria and estimates are in [PLAN.md](PLAN.md).
+## 現在地 / Current status
 
-Implemented: a localhost-only `GET /health` endpoint, a basic `Message` record and constructor, and their Go tests. Session ownership, model switching, memory, persistence and authentication are not implemented. The website uses fixed synthetic data. No project token savings or model-quality results have been measured.
+2026-11-09（Asia/Tokyo）：実装済みはlocalhost限定の `GET /health`、`Session` と所有者判定、検証付き `Message` constructor、それらのGo契約testです。切替、認証、記憶、保存、実験runner、研究UIは未実装です。品質・token削減の実測結果はありません。公開サイトは固定の合成例です。
 
-## Route A software architecture
+As of 2026-11-09 (Asia/Tokyo), implemented code consists of a localhost-only `GET /health`, a `Session` with ownership checks, a validated `Message` constructor and their Go contract tests. Switching, authentication, memory, persistence, the experiment runner and research UI are not implemented. No quality or token-saving results have been measured. The public website uses fixed synthetic examples.
+
+利用者が全実装コードを書きます。対象はGo、Python、React、設定、移行、運用script、runnerです。assistantはテスト・合成fixture・test-only fake、会話内の中国語／英語による指導・レビュー、依頼された日英文書を担当します。
+
+The user writes all implementation code: Go, Python, React, configuration, migrations, operational scripts and the runner. The assistant owns tests, synthetic fixtures and test-only fakes, provides Chinese/English teaching and review in chat, and maintains requested Japanese/English documentation.
+
+## 読む順序 / Reading order
+
+| 文書 / Document | 内容 / Purpose |
+| --- | --- |
+| [PLAN.md](PLAN.md) | 唯一の作業一覧・授業順・受入基準 / Sole action checklist, lesson sequence and acceptance gates |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 一回の授業、分担、検証 / Lesson method, ownership and validation |
+| [docs/architecture.md](docs/architecture.md) | 技術選定、モジュール境界、保存と更新 / Technology choices, module boundaries, persistence and upgrades |
+| [docs/contracts.md](docs/contracts.md) | データ、API、失敗と再試行 / Data, API, failures and retries |
+| [docs/ui.md](docs/ui.md) | React研究UI、部品ライブラリ、第三者UI / React research UI, component library and third-party clients |
+| [docs/evaluation.md](docs/evaluation.md) | 比較方式、計測、玄界、報告 / Controls, metrics, Genkai and reporting |
+| [docs/sources.md](docs/sources.md) | 一次資料、ライセンス、未確認事項 / Primary sources, licenses and unresolved verification |
+| [AGENTS.md](AGENTS.md) / [SECURITY.md](SECURITY.md) | 協働規則・機密情報 / Collaboration and sensitive data |
+
+文書は節ごとに日英を対応させます。識別子・コマンドは共通です。`LICENSE` は標準MIT原文を保持し、日本語の説明を[資料台帳](docs/sources.md)に置きます。進捗はPLAN.mdだけで更新します。
+
+Documentation pairs Japanese and English within each section. Identifiers and commands are shared. `LICENSE` retains the standard MIT text; a Japanese explanation is in the [source register](docs/sources.md). Progress is tracked only in PLAN.md.
+
+<a id="route-a-software-architecture"></a>
+
+## 推奨構成 / Recommended architecture
+
+選択済みのA案（Go + Ollama + Mem0 OSS）を維持し、Go内部を責務別に分けます。SQLiteによる正本保存を提案し、小型研究UIにはReact + TypeScript + Vite + Mantineを選択しました。初期版では独自CSSを書きません。導入・version固定・依存監査は未実施です。
+
+Keep the selected Route A (Go + Ollama + Mem0 OSS) and divide the Go application by responsibility. SQLite is proposed for authoritative storage. React + TypeScript + Vite + Mantine were selected for the small research UI, with no handwritten application CSS initially. Installation, version pinning and dependency audit remain outstanding.
 
 ```mermaid
-flowchart TD
-    Client["CLI / synthetic replay runner"] --> Go["Go bridge: identity, session, context policy"]
-    Go --> Source["Source messages and turn status"]
-    Go -->|"Answer / baseline summary"| Ollama["Ollama: local model inference"]
-    Go -->|"Scoped memory API"| Python["Python worker: Mem0 OSS"]
-    Python -->|"Extraction / update / embedding"| Ollama
-    Python --> Store["Qdrant local mode + history + source mapping"]
-    Go --> Metrics["Per-stage metrics and private results"]
+flowchart LR
+    UI["React + Mantine / 研究UI"] --> API["Go API / 認証・契約"]
+    Runner["Runner / 実験実行"] --> API
+    API --> App["Go application / 会話・切替・回復"]
+    App --> Policy["Context policies / 文脈方式"]
+    App --> DB["SQLite / 正本・状態"]
+    App --> Model["Model adapter / 推論境界"]
+    Policy --> Memory["Memory port / 記憶境界"]
+    Memory --> Worker["Python + Mem0 OSS"]
+    Model --> Ollama["Ollama / ローカル推論"]
+    Worker --> Ollama
+    Worker --> Derived["Qdrant local + history / 派生記憶"]
 ```
 
-There are three long-running processes: Go, Python and Ollama. Qdrant local mode runs inside the Python worker. All three and the replay client can run in one Genkai job. The first demonstration is a corrected fact surviving model A → B → A while another synthetic user is denied access.
+実行時はGo、Python、Ollamaの3プロセスを基本とします。UIの静的buildはGoが配信し、Node/Viteは開発・build時だけ使用します。Qdrant local modeはPython内で動作する提案です。UIなしでも同じAPIで評価できます。
 
-| Component | Responsibility | Design reason |
-| --- | --- | --- |
-| Go bridge | Identity, session ownership, request IDs, model selection, context assembly, cancellation and lifecycle coordination | Application rules remain stable when inference or memory providers change |
-| Context policy | Full history, rolling summary, or Mem0 plus recent messages; model-specific token budget | Makes the memory strategy an explicit experimental variable |
-| Model adapter | Translate a project-owned request to an allowlisted Ollama model and normalize errors/usage | Separates model execution from session state; supports later runtime replacement |
-| Python + Mem0 | Scoped ingest/search/update/delete/export, source mapping and operation status | Reuses Mem0's Python implementation behind a small contract; adds an explicit process/failure boundary |
-| Storage and metrics | Keep original messages, derived memory and measurements under separate ownership | Enables provenance, reconstruction, deletion verification and honest cost accounting |
+The runtime design has three processes: Go, Python and Ollama. Go serves the UI's static build; Node/Vite are used only for development and building. Qdrant local mode is proposed inside Python. Evaluation uses the same API without the UI.
 
-### Data and contracts
+## 提供する機能 / Planned capabilities
 
-Original messages are the authoritative record. Summaries and retrieved memories are derived information; the answer context is a temporary, budgeted selection. Each source has role, message ID, owner, timestamp and schema version. Derived records retain source IDs and revision/deletion state. Assistant output must not silently become a verified user fact. Mem0 metadata alone is not assumed to guarantee provenance.
+| 範囲 / Scope | 到達点 / Outcome |
+| --- | --- |
+| 最初のAPI demo / First API demo | 同じsessionでA → B → A、所有者確認、明示的失敗 / A → B → A in one session, ownership checks and explicit failures |
+| 記憶研究原型 / Memory prototype | 訂正・出典・検索、全履歴／要約／Mem0比較 / Corrections, provenance, search, full-history/summary/Mem0 comparison |
+| 回復可能な原型 / Recoverable prototype | 再起動、重複要求、部分失敗、export/delete / Restart, duplicates, partial failures, export/delete |
+| 研究UI / Research UI | 会話・モデル選択、記憶と出典、実験結果閲覧 / Conversation/model selection, memory/source inspection, result viewing |
+| 評価・報告 / Evaluation and report | 固定ケース、品質・token・時間・GPU負担、日英報告 / Frozen cases, quality/tokens/time/GPU overhead, bilingual report |
 
-Trusted credentials resolve `lab_id` and `user_id`; clients cannot choose them in message bodies. Every operation checks session ownership, including get/update/delete by memory ID. Session scope is the default. Evaluation runs and policies use separate namespaces. Namespace filters do not replace authentication.
+一般向けSaaS、学内SSO、多人数同時運用、ファイルRAG、agent tools、商用API、fine-tuningは初期範囲外です。第三者UI互換adapterは研究UI完成後の任意拡張です。
 
-Proposed routes: `POST /v1/sessions`, `POST /v1/sessions/{id}/messages`, `GET /v1/sessions/{id}/export`, and `DELETE /v1/sessions/{id}`. They do not exist yet. A session fixes its context policy; each message selects an allowed answer model and request ID. Go depends on `ModelClient`, `MemoryClient`, `SessionRepository` and `TokenCounter` contracts. A versioned, authenticated local HTTP/JSON API connects Go to Python without exposing Mem0 objects.
+A public SaaS, campus SSO, multi-user production operations, file RAG, agent tools, commercial APIs and fine-tuning are outside initial scope. A third-party UI adapter is an optional extension after the research UI.
 
-Start with fake stores for tests, then private per-session JSON snapshots for the small single-bridge prototype. Serialize writes and test crash recovery on each platform. One Python worker owns each local memory store. This accepts limited throughput; multiple bridge instances would require a different persistence design.
+## 現在のコードを確認する / Check existing code
 
-### Turn flow and failures
+Goが必要です。`go.mod` はGo 1.25.0を宣言し、2026-11-09にWindowsのGo 1.26.0で現在のGo test suiteの成功を確認しました。モデルやmemory packageは不要です。
 
-1. Authenticate, authorize the session, validate the request/model, and save the user message.
-2. Assemble context from previous committed state and the current request; reserve output space and check the exact model/tokenizer budget.
-3. Generate with Ollama; save the answer and usage.
-4. Complete the bounded memory/summary update before allowing the next turn; record its cost separately.
-
-Changing answer model preserves the session, source records, memory scope and policy. Helper and embedding models stay fixed. Model caches are not conversation storage. Current explicit corrections take precedence over stale derived memory in the instruction policy, and retrieved text is treated as untrusted data; model obedience must be tested.
-
-A saved answer with a failed memory update returns an explicit partial-failure status and blocks the next turn until reconciliation. Retrying the same request ID returns saved results when available; uncertain writes require recovery, not blind replay. Exactly-once inference is not claimed. Deletion first marks the session and advances its revision, rejects late writes, then purges source/derived stores and content-bearing checkpoints. Completion requires verification. Export and deletion cover summaries, vectors, memory history and source mappings as well as messages.
-
-## Local configuration and evidence
-
-Use Mem0 OSS `Memory` with explicit local generation, embedding, vector-store and history settings. Match vector dimensions. Disable telemetry before import and disable Ollama cloud features using the pinned version's supported configuration. Verify operation with outbound access denied. An embedding-only override does not establish a fully local route.
-
-Primary sources inspected on **2026-11-06**; these are survey anchors, not an installed or fully audited distribution:
-
-| Component | Evidence | Remaining work |
-| --- | --- | --- |
-| Mem0 OSS | `2.2.1`, commit `753496cf1435d76c3a711f3af51303f7fdcb6420`; [manifest](https://github.com/mem0ai/mem0/blob/753496cf1435d76c3a711f3af51303f7fdcb6420/pyproject.toml), [Apache-2.0](https://github.com/mem0ai/mem0/blob/753496cf1435d76c3a711f3af51303f7fdcb6420/LICENSE), [local LLM configuration](https://docs.mem0.ai/components/llms/models/ollama) | Resolve only needed packages, including the Ollama client; audit transitive dependencies, telemetry and artifacts |
-| Ollama | commit `c1db5f9ef203b2e946161bf4c6bd4f2ec7f123b3`; [MIT](https://github.com/ollama/ollama/blob/c1db5f9ef203b2e946161bf4c6bd4f2ec7f123b3/LICENSE), [chat API](https://docs.ollama.com/api/chat), [local-only configuration](https://docs.ollama.com/faq) | Freeze binary/version/hash, bundled libraries, chat templates and supported settings |
-| Qdrant client | `v1.20.0`; [Apache-2.0](https://github.com/qdrant/qdrant-client/blob/v1.20.0/LICENSE) | Verify local-mode compatibility, persistence and resolved dependencies |
-| Model candidates | [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B), [Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B), [Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B); publisher cards identify Apache-2.0 | Freeze model/tokenizer revisions, reasoning mode, conversion/quantization recipe and artifact hashes |
-
-Selected application software and mandatory packages must meet the OSS requirement; no proprietary hosted service is required. NVIDIA GPU platform components have separate [vendor terms](https://docs.nvidia.com/cuda/eula/index.html). Whether institution-provided CUDA components are permitted under the project's OSS boundary remains to be confirmed; a GPU deployment is not an entirely OSS dependency chain. Retain a reviewed CPU-only route if that boundary excludes them. Installation, large downloads, paid APIs and Genkai execution need their own authorized scope.
-
-## Genkai test design
-
-Official documentation, accessed **2026-11-06**, describes [PJM jobs](https://www.cc.kyushu-u.ac.jp/scp/usage/job/), [GPU resource groups](https://www.cc.kyushu-u.ac.jp/scp/usage/resource_groups/) and [Singularity](https://www.cc.kyushu-u.ac.jp/scp/system/genkai/software/Singularity/). Docker cannot run directly. Verify actual account entitlement, available modules, drivers, storage and accounting before execution.
-
-The initial proposal is one B-group GPU: a 30-minute interactive smoke test, then a development pilot capped at 60 minutes. These are resource caps, not measured runtimes. Run bridge, memory, inference and replay in one allocated compute job. Prepare reviewed artifacts beforehand; avoid runtime downloads. Services need a verified access boundary: loopback alone does not isolate other jobs on the same host, and bridge authentication does not protect a raw Ollama endpoint.
-
-The job wrapper must check readiness, save per-case checkpoints, record failures, and stop its own children. [`PJM_SSD_DIR`](https://www.cc.kyushu-u.ac.jp/scp/usage/storage/) is temporary and removed when a job ends; save required outputs to private persistent storage throughout execution. Report queue wait, model load, generation, memory processing, peak GPU memory and allocated GPU-hours separately. Charged project points require the actual accounting rules.
-
-## Evaluation design
-
-Compare **full history**, **rolling summary + recent messages**, and **Mem0 + recent messages** with the same answer model, tokenizer, cases and switch schedule. Report answer-input token reduction as `1 - sum(memory input tokens) / sum(baseline input tokens)`, separately against each baseline. Record extraction, update, summary, embedding, retrieval and retry costs independently. Smaller answer context does not prove lower total cost.
-
-The proposed dataset has 12 development and 36 distinct held-out Japanese/English cases across recall, correction, temporal order, provenance, abstention and continuation. Draft cases have 24 turns, switches after turns 8 and 16, and six scored probes. Use canonical scripted history for the paired comparison; generated-answer dialogue is a separate stress test. Three policies × three repetitions × 36 held-out cases gives 324 conversation runs. Size the final allocation from development throughput.
-
-Proposed starting limits are 16,384 total context tokens and 512 output tokens, four recent message pairs, a 1,024-token summary, or up to five memories within 1,024 tokens. Keep the primary full-history cohort inside its context window; report overflow separately. Validate exact token counting and never silently truncate a baseline.
-
-Proposed gates: at least 90% probe pass rate, no more than five percentage points below full history, and at least 30% fewer answer-input tokens versus full history. These are unapproved numerical proposals, not measured results. Freeze cases, source IDs, rubric, configuration and hashes before final evaluation. Report each language/family/model and paired uncertainty; preserve failures and negative savings. A separate contract suite requires zero unauthorized operations or post-deletion retrievals in the tested cases and covers restart, duplicate requests and deletion/update races.
-
-## Run the existing scaffold
-
-Requires Go; no model or memory dependency is needed. `go.mod` declares Go 1.25.0; Go 1.26.0 on Windows was used for the current local check.
+Go is required. `go.mod` declares Go 1.25.0; the current Go test suite passed on Windows with Go 1.26.0 on 2026-11-09. No model or memory package is needed.
 
 ```sh
 go test ./... -v -count=1
 go run ./cmd/bridge
 ```
 
-`GET http://127.0.0.1:8080/health` returns `{"status":"ok","service":"context-bridge"}`. This verifies the HTTP scaffold only.
+`GET http://127.0.0.1:8080/health` → `{"status":"ok","service":"context-bridge"}`。これはHTTP scaffoldのみの確認です。
+
+`GET http://127.0.0.1:8080/health` → `{"status":"ok","service":"context-bridge"}`. This checks the HTTP scaffold only.
 
 ```sh
 python scripts/check_repository.py
 node --check website/assets/demo.js
-python -m http.server 8000 --bind 127.0.0.1 --directory website
 ```
 
-## Repository
+依存導入、大型モデル取得、有料API、遠隔実行は許可範囲内でのみ行います。私的会話、重み、DB、実験raw出力、発表archiveは公開しません。既存 `website/` は広報用で、計画中の `web/` 研究UIとは別です。
 
-| Path | Purpose |
-| --- | --- |
-| README.md | Current architecture and research design |
-| PLAN.md | Sole action checklist, acceptance criteria and estimate |
-| CONTRIBUTING.md / AGENTS.md | Learning method and collaboration rules |
-| cmd/bridge/ / go.mod | User-owned Go functionality; assistant-maintained tests |
-| website/ | Buildless Japanese/English project website |
-| scripts/ / .github/workflows/ | Validation and GitHub Pages publication |
-| LICENSE / SECURITY.md | Licensing and sensitive-data policy |
-
-Presentation archives, generated artifacts, private data, model weights, databases and local history backups stay outside the published tree. Original project material is MIT-licensed; third-party software and model artifacts retain their own terms.
-
-## 日本語
-
-A案（Goブリッジ + Ollama + Mem0 OSS）を原型の実装ルートとして選択しました。現在の実装はlocalhostのhealth endpoint、基本的なMessage record／constructorとそのGoテストです。session所有権、モデル切替、記憶、永続化、認証、性能は未実装／未測定です。利用者本人が全機能コードを実装し、assistantはテストコードと合成fixtureを担当し、会話内で中国語・英語の説明とレビューを行います。ローカル原型16授業、玄界・評価・報告まで追加4授業を提案します。正式文書とサイトは日英で維持します。
-
-Goが会話・権限・文脈組立を管理し、PythonのMem0が記憶を処理し、Ollamaが推論を実行します。原会話を正本として保持し、記憶を派生情報として出典とともに追跡します。モデルA → B → Aで訂正を保持し、別利用者からのアクセスを拒否することが最初の到達点です。玄界では1ジョブ内の構成を検証し、全履歴・逐次要約・Mem0を固定条件で比較します。大学公式サービスではありません。
-
-週20時間の本人実装・学習を前提に、ローカルdemoは約2–3週間、玄界評価と報告まで約4–7週間（80–140時間）を見込みます。計画値であり、最初の1週間の実績で更新します。詳細な作業と受入基準は[PLAN.md](PLAN.md)、指導方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+Installation, large downloads, paid APIs and remote execution require authorized scope. Private conversations, weights, databases, raw output and presentation archives are not published. Existing `website/` is the public information site, separate from the proposed `web/` research UI.
