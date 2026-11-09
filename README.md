@@ -10,9 +10,9 @@ This independent repository originates in a Kyushu University RA project. It stu
 
 ## 現在地 / Current status
 
-2026-11-09（Asia/Tokyo）：実装済みはlocalhost限定の `GET /health`、`Session` と所有者判定、検証付き `Message` constructor、それらのGo契約testです。切替、認証、記憶、保存、実験runner、研究UIは未実装です。品質・token削減の実測結果はありません。公開サイトは固定の合成例です。
+2026-11-10（Asia/Tokyo）：実装済みはlocalhost限定の `GET /health`、`Session` と所有者判定、検証付き `Message`、versioned turn request DTO、project固有の `ModelClient` 契約とGo testです。HTTP turn handler、model adapter、切替、認証、記憶、保存、実験runner、研究UIは未実装です。品質・token削減の実測結果はありません。公開サイトは固定の合成例です。
 
-As of 2026-11-09 (Asia/Tokyo), implemented code consists of a localhost-only `GET /health`, a `Session` with ownership checks, a validated `Message` constructor and their Go contract tests. Switching, authentication, memory, persistence, the experiment runner and research UI are not implemented. No quality or token-saving results have been measured. The public website uses fixed synthetic examples.
+As of 2026-11-10 (Asia/Tokyo), implemented code consists of a localhost-only `GET /health`, a `Session` with ownership checks, validated `Message` construction, a versioned turn-request DTO, a project-owned `ModelClient` contract and Go tests. The HTTP turn handler, model adapter, switching, authentication, memory, persistence, experiment runner and research UI are not implemented. No quality or token-saving results have been measured. The public website uses fixed synthetic examples.
 
 利用者が全実装コードを書きます。対象はGo、Python、React、設定、移行、運用script、runnerです。assistantはテスト・合成fixture・test-only fake、会話内の中国語／英語による指導・レビュー、依頼された日英文書を担当します。
 
@@ -78,9 +78,9 @@ A public SaaS, campus SSO, multi-user production operations, file RAG, agent too
 
 ## 現在のコードを確認する / Check existing code
 
-Goが必要です。`go.mod` はGo 1.25.0を宣言し、2026-11-09にWindowsのGo 1.26.0で現在のGo test suiteの成功を確認しました。モデルやmemory packageは不要です。
+Goが必要です。`go.mod` はGo 1.25.0を宣言し、2026-11-10にWindowsのGo 1.26.0で現在のGo test suiteの成功を確認しました。モデルやmemory packageは不要です。
 
-Go is required. `go.mod` declares Go 1.25.0; the current Go test suite passed on Windows with Go 1.26.0 on 2026-11-09. No model or memory package is needed.
+Go is required. `go.mod` declares Go 1.25.0; the current Go test suite passed on Windows with Go 1.26.0 on 2026-11-10. No model or memory package is needed.
 
 ```sh
 go test ./... -v -count=1

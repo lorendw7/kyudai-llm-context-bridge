@@ -1,6 +1,6 @@
 # 契約設計 / Contract design
 
-更新 / Updated: 2026-11-08。`GET /health`以外は未実装の提案です。本人がschema・DTO・handlerを実装し、assistantが契約fixtureとテストを作成します。 / Except for GET /health, these are unimplemented proposals. The user implements schemas, DTOs and handlers; the assistant writes contract fixtures and tests.
+更新 / Updated: 2026-11-10。実装済みは `GET /health`、`Session`／`Message` domain契約、version 1の `CreateTurnRequest` と `ModelClient` interfaceです。turn handler、認証、allowlist、adapterと以下の完全なAPIは未実装の提案です。本人がschema・DTO・handlerを実装し、assistantが契約fixtureとテストを作成します。 / Implemented: `GET /health`, Session/Message domain contracts, the version 1 `CreateTurnRequest` and the `ModelClient` interface. The turn handler, authentication, allowlist, adapters and the complete API below remain unimplemented proposals. The user implements schemas, DTOs and handlers; the assistant writes contract fixtures and tests.
 
 ## 正本とscope / Authority and scope
 

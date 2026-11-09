@@ -1,6 +1,6 @@
 # 作業計画 / Plan
 
-更新 / Updated: 2026-11-09 (Asia/Tokyo)。本書だけが作業・進捗の一覧です。他の文書は設計・学習資料です。 / This is the sole action and progress checklist. Other documents contain design and learning references.
+更新 / Updated: 2026-11-10 (Asia/Tokyo)。本書だけが作業・進捗の一覧です。他の文書は設計・学習資料です。 / This is the sole action and progress checklist. Other documents contain design and learning references.
 
 ## 方針 / Decisions
 
@@ -54,9 +54,9 @@
 | L23 / S6 | 固定条件で最終実行 / Final execution under frozen conditions | 324 runs案、欠測・隔離suite / Proposed 324 runs, missing data and isolation suite |
 | L24 / S6 | 日英報告・再現ガイド / Bilingual report/reproduction guide | 主張と証拠の対応、未達記載 / Claims mapped to evidence, unmet targets reported |
 
-L1は2026-11-09に完了しました（1/24、残り23）。本人実装のSession、所有者判定、Message role・必須値・明示時刻・session scopeをassistantの合成契約testで検証し、`go test ./... -count=1` が成功しました。次はL2です。interface、API DTO、依存方向を一つの小さい契約から学びます。S1全体はL1–L4の受入後に完了します。
+L1–L2は2026-11-10までに完了しました（2/24、残り22）。L1ではSession、所有者、Message検証を、L2では本人実装のversioned `CreateTurnRequest`、project固有の生成入出力、`context.Context`を受ける`ModelClient`をassistantの正常・異常・取消fixtureで検証しました。`go test ./... -count=1` と `go vet ./...` が成功しました。次はL3の認証、session API、model allowlistです。S1全体はL1–L4の受入後に完了します。
 
-L1 was completed on 2026-11-09 (1/24 complete, 23 remaining). Assistant-authored synthetic contract tests verified the user-written Session, ownership check, Message roles, required values, explicit timestamps and session scope; `go test ./... -count=1` passed. L2 is next, starting with one small contract for interfaces, API DTOs and dependency direction. S1 completes after acceptance of L1–L4.
+L1–L2 were completed by 2026-11-10 (2/24 complete, 22 remaining). L1 verified Session, ownership and Message validation. L2 used assistant-authored valid, invalid and cancellation fixtures to verify the user-written versioned `CreateTurnRequest`, project-specific generation input/output and `ModelClient` accepting `context.Context`. `go test ./... -count=1` and `go vet ./...` passed. L3 is next: authentication, the session API and the model allowlist. S1 completes after acceptance of L1–L4.
 
 ## 工数 / Effort
 

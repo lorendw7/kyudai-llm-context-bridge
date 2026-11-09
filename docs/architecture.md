@@ -1,6 +1,6 @@
 # ADR-001: 保守可能な研究原型 / Maintainable research prototype
 
-日付 / Date: 2026-11-08。状態 / Status: A案は選択済み、以下の分割・SQLite・UI詳細は設計提案。 / Route A is selected; the module split, SQLite and UI details below are design proposals.
+日付 / Date: 2026-11-10。状態 / Status: A案は選択済み。domain契約、versioned turn DTO、project固有の `ModelClient` interfaceは実装済みで、以下のpackage分割・adapter・SQLite・UI詳細は設計提案。 / Route A is selected. Domain contracts, the versioned turn DTO and the project-owned `ModelClient` interface are implemented; the package split, adapters, SQLite and UI details below remain design proposals.
 
 決定者は利用者です。実装と導入は別途の受入・許可範囲に従います。進捗は[PLAN.md](../PLAN.md)のみで管理します。
 
