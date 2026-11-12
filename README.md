@@ -10,17 +10,13 @@ This independent repository originates in a Kyushu University RA project. It stu
 
 ## 受入済みの範囲 / Accepted implementation
 
-2026-11-10（Asia/Tokyo）までの受入済み範囲は、localhost限定の `GET /health`、`Session` と所有者判定、検証付き `Message`、versioned turn request DTO、project固有の `ModelClient` 契約とGo testです。HTTP turn handler、model adapter、切替、認証統合、記憶、保存、実験runner、研究UIは未受入です。品質・token削減の実測結果はありません。公開サイトは固定の合成例です。以後の進捗・検証結果は[PLAN.md](PLAN.md)を参照します。
+2026-11-13現在、localhost health、Session／Messageとturn request／ModelClient契約に加え、Bearer認証、所有sessionの作成・取得・一覧、許可model ID一覧、環境設定からの起動を検証済みです。sessionはmemoryのみで、応答はmetadataです。turn処理、切替、model adapter、記憶、永続保存、runner、研究UIは未受入です。品質・token削減の実測結果はありません。検証証拠・進捗は[PLAN.md](PLAN.md)を参照します。
 
-Accepted work through 2026-11-10 (Asia/Tokyo) comprises a localhost-only `GET /health`, a `Session` with ownership checks, validated `Message` construction, a versioned turn-request DTO, a project-owned `ModelClient` contract and Go tests. The HTTP turn handler, model adapter, switching, integrated authentication, memory, persistence, experiment runner and research UI have not been accepted. No quality or token-saving results have been measured. The public website uses fixed synthetic examples. See [PLAN.md](PLAN.md) for subsequent progress and verification.
+As of 2026-11-13, verified implementation includes localhost health, Session/Message and turn-request/ModelClient contracts, Bearer authentication, owned-session creation/retrieval/listing, configured model IDs and environment-based startup. Sessions are in memory and responses contain metadata. Turn processing, switching, model adapters, memory, persistence, runner and research UI remain unaccepted. No quality or token-saving results have been measured. See [PLAN.md](PLAN.md) for verification evidence and progress.
 
 利用者が研究機能の実装コードを書きます。対象はGo、Python、React研究UI（`web/`）、設定、移行、運用script、runnerです。assistantはテスト・合成fixture・test-only fake、会話内の中国語／英語による指導・レビュー、依頼された日英文書を担当します。2026-11-12の利用者指定により、公開サイト（`website/`）と美術素材もassistantが担当します。
 
 The user writes research implementation code: Go, Python, the React research UI (`web/`), configuration, migrations, operational scripts and the runner. The assistant owns tests, synthetic fixtures and test-only fakes, provides Chinese/English teaching and review in chat, and maintains requested Japanese/English documentation. The user additionally assigned the public website (`website/`) and visual assets to the assistant on 2026-11-12.
-
-2026-11-12追補：`Principal`、token認証component、model allowlistも合成testで検証しました。認証componentはまだHTTP handlerに接続されておらず、起動時のrouteは引き続き `GET /health` のみです。認証の構造は[契約設計](docs/contracts.md#token-authenticator)、授業の残作業・検証記録は[PLAN.md](PLAN.md)を参照します。
-
-2026-11-12 addendum: synthetic tests also verify `Principal`, the token-authentication component and the model allowlist. Authentication is not yet connected to HTTP handlers; the running server still exposes only `GET /health`. See the [contract design](docs/contracts.md#token-authenticator) for authentication structure and [PLAN.md](PLAN.md) for remaining lesson work and verification records.
 
 ## 読む順序 / Reading order
 
@@ -84,18 +80,20 @@ A public SaaS, campus SSO, multi-user production operations, file RAG, agent too
 
 ## 現在のコードを確認する / Check existing code
 
-Goが必要です。`go.mod` はGo 1.25.0を宣言し、2026-11-10の受入ではWindowsのGo 1.26.0で当時のGo test suiteが成功しました。モデルやmemory packageは不要です。作業中の変更は下記のcommandで別途確認します。
+Goが必要です。go.modはGo 1.25.0を宣言し、検証環境はWindows Go 1.26.0です。model／memory packageは不要です。Python標準libraryによる起動testは合成環境設定を子processだけに渡し、一時buildとserverを後処理します。127.0.0.1:8080を空けて実行してください。
 
-Go is required. `go.mod` declares Go 1.25.0; the suite accepted on 2026-11-10 passed on Windows with Go 1.26.0. No model or memory package is needed. Verify working changes separately with the commands below.
+Go is required: go.mod declares Go 1.25.0; verification used Windows Go 1.26.0. No model/memory packages are needed. The Python standard-library startup test passes synthetic configuration only to child processes and cleans up its temporary build and server. Port 127.0.0.1:8080 must be free.
 
 ```sh
-go test ./... -v -count=1
-go run ./cmd/bridge
+go test ./... -count=1
+go vet ./...
+go test -race ./... -count=1
+python tests/test_bridge_startup.py
 ```
 
-`GET http://127.0.0.1:8080/health` → `{"status":"ok","service":"context-bridge"}`。これはHTTP scaffoldのみの確認です。
+手動の `go run ./cmd/bridge` には `BRIDGE_TOKEN`、`BRIDGE_LAB_ID`、`BRIDGE_USER_ID`、`BRIDGE_MODEL_IDS` が必要です。model IDsは空白なしのcomma区切りで、空値・重複を拒否します。credentialはlocal環境で設定しcommitしません。healthだけが公開で、`/v1/` routeは `Authorization: Bearer <token>` を要求します。model一覧は設定値であり推論準備状態ではありません。
 
-`GET http://127.0.0.1:8080/health` → `{"status":"ok","service":"context-bridge"}`. This checks the HTTP scaffold only.
+Manual `go run ./cmd/bridge` requires `BRIDGE_TOKEN`, `BRIDGE_LAB_ID`, `BRIDGE_USER_ID` and `BRIDGE_MODEL_IDS`. Model IDs are comma-separated without whitespace; empty/duplicate entries are rejected. Set credentials locally and never commit them. Only health is public; `/v1/` routes require `Authorization: Bearer <token>`. The model list represents configuration, not inference readiness.
 
 ```sh
 python scripts/check_repository.py

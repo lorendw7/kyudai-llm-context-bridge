@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sort"
 	"strings"
 )
 
@@ -40,4 +41,15 @@ func NewModelAllowlist(modelIDs []string) (ModelAllowlist, error) {
 func (a ModelAllowlist) Allows(modelID string) bool {
 	_, exists := a.models[modelID]
 	return exists
+}
+
+func (a ModelAllowlist) IDs() []string {
+	ids := make([]string, 0, len(a.models))
+
+	for modelID := range a.models {
+		ids = append(ids, modelID)
+	}
+
+	sort.Strings(ids)
+	return ids
 }

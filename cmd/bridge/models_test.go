@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestModelAllowlistAllowsConfiguredModelsOnly(t *testing.T) {
 	allowlist, err := NewModelAllowlist([]string{
@@ -68,5 +71,56 @@ func TestModelAllowlistOwnsItsConfiguration(t *testing.T) {
 	}
 	if allowlist.Allows("changed-after-construction") {
 		t.Fatal("allowlist retained the caller's mutable slice")
+	}
+}
+
+func TestModelAllowlistIDsReturnsSortedConfiguredModels(t *testing.T) {
+	want := []string{"local-model-a", "local-model-b", "local-model-c"}
+	for _, input := range [][]string{
+		{"local-model-c", "local-model-a", "local-model-b"},
+		{"local-model-b", "local-model-c", "local-model-a"},
+	} {
+		allowlist, err := NewModelAllowlist(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := allowlist.IDs()
+		if !slices.Equal(got, want) {
+			t.Fatalf("IDs = %v, want %v", got, want)
+		}
+		for _, id := range got {
+			if !allowlist.Allows(id) {
+				t.Errorf("listed model %q is not allowed", id)
+			}
+		}
+		if allowlist.Allows("local-model-unconfigured") {
+			t.Error("listing changed allowed membership")
+		}
+	}
+}
+
+func TestModelAllowlistIDsReturnsIndependentSlice(t *testing.T) {
+	allowlist, err := NewModelAllowlist([]string{"local-model-b", "local-model-a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, second := allowlist.IDs(), allowlist.IDs()
+	if len(first) != 2 || len(second) != 2 {
+		t.Fatal("expected two configured models")
+	}
+	first[0] = "synthetic-injected-model"
+	want := []string{"local-model-a", "local-model-b"}
+	if !slices.Equal(second, want) || !slices.Equal(allowlist.IDs(), want) {
+		t.Error("mutating one result changed another or subsequent result")
+	}
+	if !allowlist.Allows("local-model-a") || allowlist.Allows("synthetic-injected-model") {
+		t.Error("mutating IDs changed authorization")
+	}
+}
+
+func TestZeroModelAllowlistIDsReturnsEmptySlice(t *testing.T) {
+	var allowlist ModelAllowlist
+	if got := allowlist.IDs(); got == nil || len(got) != 0 {
+		t.Fatalf("zero-value IDs = %#v, want initialized empty slice", got)
 	}
 }

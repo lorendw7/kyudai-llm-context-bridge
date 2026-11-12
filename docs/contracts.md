@@ -1,10 +1,12 @@
 # 契約設計 / Contract design
 
-更新 / Updated: 2026-11-12。2026-11-10までの受入済み範囲は `GET /health`、`Session`／`Message` domain契約、version 1の `CreateTurnRequest` と `ModelClient` interfaceです。turn handler、認証統合、allowlist、adapterと以下の完全なAPIは未受入の設計です。本人がschema・DTO・handlerを実装し、assistantが契約fixtureとテストを作成します。 / Accepted through 2026-11-10: `GET /health`, Session/Message domain contracts, the version 1 `CreateTurnRequest` and the `ModelClient` interface. The turn handler, integrated authentication, allowlist, adapters and the complete API below remain designs without acceptance. The user implements schemas, DTOs and handlers; the assistant writes contract fixtures and tests.
+更新 / Updated: 2026-11-13。health、Session／Message、CreateTurnRequest／ModelClient契約、Bearer認証、session metadataの作成・取得・一覧、許可model ID一覧と環境起動を検証済みです。以下の完全API・turn処理・永続化は設計です。証拠は[PLAN.md](../PLAN.md)。
 
-2026-11-12追補：`Principal`、`TokenAuthenticator`、`ModelAllowlist` はcomponent testで検証済みです。上記のallowlist未受入はHTTP接続について継続します。認証handler、session API、model一覧は未実装で、公開routeは `GET /health` のみです。受入証拠は[PLAN.md](../PLAN.md)に記録します。
+Verified implementation includes health, Session/Message, CreateTurnRequest/ModelClient contracts, Bearer authentication, session-metadata creation/retrieval/listing, configured model IDs and environment-based startup. The complete API below, turn processing and persistence remain designs. Evidence is in [PLAN.md](../PLAN.md).
 
-2026-11-12 addendum: `Principal`, `TokenAuthenticator` and `ModelAllowlist` are verified by component tests. The outstanding allowlist acceptance above now concerns HTTP integration. Authentication handlers, session APIs and model listing remain unimplemented; the only exposed route is `GET /health`. [PLAN.md](../PLAN.md) records acceptance evidence.
+現在のPOST bodyは `{"schema_version":"1","policy_id":"full-history-v1"}` の単一JSONで、未知fieldと4096 bytes超を拒否します。201とLocationを返し、responseはid、policy_id、revision、created_atです。取得と一覧も同じmetadataだけで、一覧の順序は未定義、空は配列です。不存在・他所有者は同じ404。errorは最小の `{"code":"..."}` で完全envelopeではありません。memory storeは再起動で失われます。
+
+The current POST body is one JSON value, `{"schema_version":"1","policy_id":"full-history-v1"}`; unknown fields and bodies over 4096 bytes are rejected. Success returns 201 and Location with id, policy_id, revision and created_at. Retrieval/listing return the same metadata only; list order is unspecified and empty lists are arrays. Missing and foreign-owned sessions share a 404. Errors use minimal `{"code":"..."}` responses, not the full envelope. The memory store is lost on restart.
 
 <a id="token-authenticator"></a>
 
@@ -21,17 +23,17 @@
 | `a.principals` | authenticatorが保持する独立した設定map / Authenticator-owned configuration map |
 | `principal` | 一つのtokenで検索したidentity / One identity resolved from a token |
 
-constructorは空設定・空token・token内の空白・空identityを拒否し、新mapにentryをコピーします。現在のPrincipalはstring fieldのみなので、このコピーで呼出し側のmap変更から隔離できます。設定の読込・実credential配布・更新はまだ接続していません。合成test tokenはtest専用で、実credentialをcode、log、公開文書に置きません。
+constructorは空設定・空token・token内の空白・空identityを拒否し、新mapにentryをコピーします。現在のPrincipalはstring fieldのみなので、このコピーで呼出し側のmap変更から隔離できます。環境から単一local利用者の設定を読込みます。実credential配布・更新は未実装です。合成test tokenはtest専用で、実credentialをcode、log、公開文書に置きません。
 
-The constructor rejects empty configuration, empty tokens, whitespace inside tokens and empty identities, then copies entries into a new map. Principal currently contains only string fields, so this isolates authentication from caller-side map mutation. Configuration loading, real-credential provisioning and rotation are not wired up. Synthetic test tokens are test-only; real credentials do not belong in code, logs or public documentation.
+The constructor rejects empty configuration, empty tokens, whitespace inside tokens and empty identities, then copies entries into a new map. Principal currently contains only string fields, so this isolates authentication from caller-side map mutation. Environment loading configures one local user; real-credential provisioning and rotation are not implemented. Synthetic test tokens are test-only; real credentials do not belong in code, logs or public documentation.
 
 `Authenticate(r *http.Request)` はちょうど一つのAuthorization値を要求し、`strings.Fields` でschemeとtokenの二つに分けます。schemeは `Bearer` と大小文字を無視して比較し、tokenは完全一致で検索します。成功時はserverのPrincipalとnil、失敗時は空Principalとtokenを含まないerrorを返します。`*http.Request` は標準HTTP handlerから渡される非nilのrequest pointerで、componentはそのheaderを読み取ります。
 
 `Authenticate(r *http.Request)` requires exactly one Authorization value and uses `strings.Fields` to split it into scheme and token. It compares the scheme to `Bearer` case-insensitively, then looks up the token exactly. Success returns the server-configured Principal and nil; failure returns an empty Principal and an error without the token. `*http.Request` is the non-nil request pointer supplied by a standard HTTP handler; the component reads its headers.
 
-流れは「server設定 → constructorでコピー → Authorizationのtoken検索 → Principal → session所有者検証」です。最後のHTTP認可接続は未実装です。body・query・独自identity headerは認証identityの根拠になりません。401への変換は今後handlerが担当し、認証成功後も `CanAccessSession` による所有者検証が必要です。
+流れは「server設定 → constructorでコピー → Authorizationのtoken検索 → Principal → session所有者検証」です。HTTP認可接続は実装済みです。body・query・独自identity headerは認証identityの根拠になりません。RequireAuthが失敗を401へ変換し、認証成功後も `CanAccessSession` による所有者検証が必要です。
 
-The flow is: server configuration → constructor copy → Authorization-token lookup → Principal → session ownership check. The final HTTP authorization wiring is not implemented. Body, query and custom identity headers are not sources of authenticated identity. Future handlers will translate authentication errors into 401 responses; successful authentication still requires ownership authorization with `CanAccessSession`.
+The flow is: server configuration → constructor copy → Authorization-token lookup → Principal → session ownership check. HTTP authorization is wired up. Body, query and custom identity headers are not sources of authenticated identity. RequireAuth translates authentication errors into 401 responses; successful authentication still requires ownership authorization with `CanAccessSession`.
 
 ## 正本とscope / Authority and scope
 
