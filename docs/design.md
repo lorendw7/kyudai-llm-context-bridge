@@ -25,27 +25,39 @@ The user's 2026-11-12 instruction assigns the public website and artwork to the 
 
 ## 参照と適用範囲 / Reference and scope
 
-2026-11-12に[九州大学公式website](https://www.kyushu-u.ac.jp/ja/)の実際の表示を確認しました。参考にしたのは白いheader、明確なnavigation、梅紫のaccentによる情報階層です。本projectではこの一般的な整理方法を使い、大学siteの複製や公式brandingの採用は行いません。大学logo、写真、文章を転用せず、独立projectの表示を維持します。参照記録は[資料台帳](sources.md)に置きます。
+2026-11-12に[九州大学公式website](https://www.kyushu-u.ac.jp/ja/)の実際の表示とbrowserの算出styleを確認しました。調査した白いbody／header、無彩色の文字、紫紅accentを参考にします。要素ごとの値とfont指定は[資料台帳](sources.md)に記録し、大学brand guideline全体の調査結果とはしません。
 
-The [official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) was visually inspected on 2026-11-12. The reference points were its white header, clear navigation and hierarchy using plum accents. Apply those general organizational principles to this project without cloning the university site or adopting its official branding. No university logos, photos or copy are reused; retain the independent-project identification. The inspection is recorded in the [source register](sources.md).
+The [official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) was inspected visually and through browser-computed styles on 2026-11-12. The sampled white body/header, neutral text and burgundy accents inform this design. Element-level values and font declarations are recorded in the [source register](sources.md), not presented as a complete university brand-guideline audit.
+
+本projectは一般的な情報階層と確認した色値を参考にします。大学logo、写真、文章、公式brandingは転用せず、独立projectの表示を維持します。参照siteのremote fontは導入せず、日本語には端末のMeiryoを先頭とするsystem fontを使います。
+
+This project takes the general information hierarchy and observed colors as references. No university logos, photos, copy or official branding are reused; retain the independent-project identification. Do not import the reference site's remote fonts; use system fonts with Meiryo first for Japanese.
 
 ## 視覚言語 / Visual language
 
 | 要素 / Element | 用途 / Use |
 | --- | --- |
 | White `#ffffff` | header、本文、section、footerの背景を統一 / Consistent backgrounds for the header, body, sections and footer |
-| Plum `#7b1746` | 既存project markと小さなaccentに限定。成功・失敗の判定色にしない / Retained project mark and small accents; not a success/failure code |
-| Ink `#242125` / muted `#68636a` | 見出し・本文と補足の階層 / Heading/body and supporting text hierarchy |
-| Line `#e5e5e5` | 細い灰色の区切り。操作可能性や状態を線だけで伝えない / Fine gray dividers; never the sole indicator of an action or state |
-| System sans-serif | 見出しと本文で端末の標準fontを使用。外部fontの取得なし / System sans-serif headings and body text without remote font downloads |
+| Burgundy `#85023e` | navigation、link、選択状態の小さなaccent。成功・失敗の判定色にしない / Small navigation, link and selection accents; not a success/failure code |
+| Black `#000000` / body `#333333` / muted `#666666` | 見出し、本文、補足を無彩色の明度で区分 / Neutral luminance levels for headings, body and supporting text |
+| Selected surface `#f5f5f5` / line `#dddddd` | 選択面と細い区切り。選択状態は文字・aria属性も併用 / Neutral selected surfaces and fine dividers; also express selection through labels and ARIA |
+| System sans-serif | 日本語はMeiryo優先。見出しと本文に端末のfontを使い、外部fontを取得しない / Meiryo-first Japanese; system fonts for headings and body without remote font downloads |
 
-公開siteは文章中心の研究資料として、問い→合成例→構成→調査方法→正本文書の順に案内します。heroの装飾cardを除き、見出しとsectionの余白を簡潔にし、資料は単純なlink一覧にします。構成説明の継続図はnative HTMLの `details` / `summary` で必要時に開き、図を開かなくても要点を本文で読めるようにします。訂正前後の違いと証拠区分、keyboard focusを維持します。
+上表はprojectの採用値です。補足色、選択面、区切り線は独自の設計判断です。前版もpage背景は白でした。今回は本文と選択面を無彩色に整理し、純白canvasとlight color schemeを明示します。
 
-The public site reads as a research publication: question → synthetic example → architecture → method → reference documents. Remove the decorative hero card, keep headings and section spacing compact, and present resources as simple links. The continuity diagram in the architecture section opens on demand through native HTML `details` / `summary`; the prose explains the essentials while it is closed. Preserve visible corrections, evidence labels and keyboard focus.
+The table defines project choices; muted text, selected surfaces and dividers are independent decisions. The previous page background was already white. This revision makes text and selected surfaces neutral and explicitly defines a pure-white canvas and light color scheme.
 
-既存SVG内の紙色 `#f5f3ef` と線色 `#ddd7da` は図の原本として保持し、今回の白基調化では変更しません。これらはwebsiteのsection背景ではありません。研究UIはdefault Mantine themeとcomponent propsを優先し、公開siteのpaletteをそのまま研究UI themeとして導入する要件にはしません。
+headerはproject名と言語切替の行、その下の白いnavigation行に分けます。heroは研究の説明と短い受入状況のasideを並べ、別のstatus帯で同じ情報を繰り返しません。本文は問い→合成例→構成→調査方法→正本文書の順で、sectionとfooterの余白を詰めます。資料は見出しの下に2列×2行の簡潔なlinkを置き、狭幅では1列にします。
 
-Retain the existing SVGs' paper color `#f5f3ef` and divider color `#ddd7da` as part of their unchanged diagram sources. They are not website-section backgrounds. The research UI prioritizes the default Mantine theme and component props; the public-site palette does not require a matching research UI theme.
+The header has a project-name/language row followed by a white navigation row. The hero pairs the research introduction with a compact evidence aside, avoiding a separate strip that repeats the status. The body follows question → synthetic example → architecture → method → reference documents, with tighter sections and footer spacing. Place compact resource links in a two-by-two grid below their heading, switching to one column on narrow screens.
+
+構成説明の継続図はnative HTMLの `details` / `summary` で必要時に開き、閉じた状態でも要点を本文で読めるようにします。訂正前後の違いと証拠区分、keyboard focusを維持し、heroに装飾図を戻しません。
+
+The continuity diagram in the architecture section opens on demand through native HTML `details` / `summary`; the prose explains the essentials while it is closed. Preserve visible corrections, evidence labels and keyboard focus, without restoring decorative hero artwork.
+
+既存SVGの梅紫 `#7b1746`、紙色 `#f5f3ef`、線色 `#ddd7da` は原本として保持し、今回の再設計では変更しません。既存project markも保持します。図内の色はwebsiteのsection背景ではありません。研究UIはdefault Mantine themeとcomponent propsを優先し、公開siteのpaletteをそのまま研究UI themeとして導入する要件にはしません。
+
+Retain the existing SVGs' plum `#7b1746`, paper `#f5f3ef` and divider `#ddd7da` colors in their unchanged sources, along with the existing project mark. Colors within artwork are not website-section backgrounds. The research UI prioritizes the default Mantine theme and component props; the public-site palette does not require a matching research UI theme.
 
 ## 画像と同等の文章 / Text equivalents
 
@@ -67,9 +79,9 @@ Give explanatory images JA/EN titles/descriptions and meaningful alt text, and r
 
 The assistant authored the new SVGs on 2026-11-12 using the existing project palette. No third-party imagery, image-generation model, commercial API or font download was used. Do not infer the original mark's authorship or production history. Original project material follows the repository's [MIT license](../LICENSE); evidence classes and inspection dates are recorded in [sources.md](sources.md).
 
-同日の白基調化では既存SVGを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
+同日の白基調化と続く再設計では既存SVGを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
 
-The white-background simplification on the same date leaves the SVG sources unchanged and adds no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
+The white-background simplification and subsequent redesign on the same date leave the SVG sources unchanged and add no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
 
 画像の値や語句を更新するときは関連本文と日英を同時に確認します。SVGの構文、外部参照の不在、実際の描画、代替text、local linkを確認します。画像の描画確認は、研究UIの動作検証やモデル評価の証拠にはなりません。
 

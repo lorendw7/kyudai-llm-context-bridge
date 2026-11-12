@@ -29,11 +29,23 @@ These are design proposals and synthetic examples. Model version is not applicab
 
 | 資料 / Source | 参照日・確認内容 / Inspection date and observation | 採用範囲 / Application |
 | --- | --- | --- |
-| [九州大学公式website / Official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) | 2026-11-12。実際の表示で白いheader、明確なnavigation、梅紫のaccentを確認 / Visually inspected the white header, clear navigation and plum accents on 2026-11-12 | 一般的な情報階層の参考のみ。大学logo・写真・文章・公式brandingは転用しない / Reference for general information hierarchy only; no reuse of university logos, photos, copy or official branding |
+| [九州大学公式website / Official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) | 2026-11-12。実際の表示とbrowserの算出styleを確認。下表は調査した要素のsnapshot / Visual and browser-computed-style inspection on 2026-11-12; sampled observations below | 一般的な情報階層と色値の参考。大学logo・写真・文章・公式brandingは転用しない / Reference for general hierarchy and colors; no reuse of university logos, photos, copy or official branding |
 
-本projectの判断は、白 `#ffffff` のpage背景、灰色 `#e5e5e5` の細線、system sans-serifの見出し、少量の既存梅紫accentを使うことです。heroの装飾cardを除き、構成図をnative `details`で必要時に開き、資料linkを簡潔にします。これはproject独自の設計判断で、大学による要件・公認や研究効果の証拠ではありません。新しい画像・依存・font・modelは追加しません。
+| 公式siteで確認した対象 / Sampled official-site element | 算出値・指定 / Computed value or declaration |
+| --- | --- |
+| body・header背景 / Body and header backgrounds | `rgb(255, 255, 255)` / `#ffffff` |
+| body文字 / Body text | `rgb(51, 51, 51)` / `#333333` |
+| 見出し・navigation文字 / Heading and navigation text | `rgb(0, 0, 0)` / `#000000` |
+| 危機管理button背景・ALL NEWS枠 / Crisis-management button background and ALL NEWS border | `rgb(133, 2, 62)` / `#85023e` |
+| Font指定 / Font declarations | bodyはMeiryoを含み、headerはNoto Sans JPを指定 / Body includes Meiryo; header specifies Noto Sans JP |
 
-The project's design decision uses white `#ffffff` page backgrounds, fine gray `#e5e5e5` dividers, system sans-serif headings and small accents in the existing plum color. Remove the decorative hero card, reveal the architecture diagram on demand through native `details`, and simplify resource links. These are independent project decisions, not university requirements, endorsement or evidence of research effectiveness. Add no new images, dependencies, fonts or models.
+上記は当日の要素ごとの観測で、大学brand guideline全体や各端末の実使用fontを検証した結果ではありません。本projectは背景 `#ffffff`、見出し `#000000`、本文 `#333333`、補足 `#666666`、accent `#85023e`、選択面 `#f5f5f5`、枠 `#dddddd` を採用します。補足・選択面・枠などはprojectの設計判断です。light color schemeを明示し、日本語はMeiryo優先のsystem fontを使い、remote fontは導入しません。
+
+These are element-level observations on the inspection date, not verification of the complete university brand guidelines or the font actually used on every device. Project choices are background `#ffffff`, headings `#000000`, body `#333333`, muted text `#666666`, accents `#85023e`, selected surfaces `#f5f5f5` and borders `#dddddd`. Muted text, selected surfaces and borders are project decisions. Declare a light color scheme and use Meiryo-first system fonts for Japanese without importing remote fonts.
+
+前版もpage背景は白でした。今回は本文と選択面を無彩色に整理し、白canvasを明示します。project名・言語とnavigationを二段にし、heroの研究説明に受入状況のasideを添え、重複するstatus帯を除きます。構成図はnative `details`で必要時に開き、資料linkは広幅2列×2行・狭幅1列にします。これらは独自の設計判断で、大学による要件・公認や研究効果の証拠ではありません。新しい画像・依存・font・modelは追加しません。
+
+The previous page background was already white; this revision makes text and selected surfaces neutral and defines the white canvas explicitly. Use separate project-name/language and navigation rows, pair the hero introduction with an evidence aside, and remove the redundant status strip. Reveal the architecture diagram through native `details` and arrange resource links in a two-by-two grid on wide screens and one column on narrow screens. These are independent decisions, not university requirements, endorsement or research evidence. Add no new images, dependencies, fonts or models.
 
 ## Coreの調査snapshot / Core survey snapshots
 
