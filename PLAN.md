@@ -65,6 +65,20 @@ L1–L2は2026-11-10までに完了しました（2/24、残り22）。L1ではS
 
 L1–L2 were completed by 2026-11-10 (2/24 complete, 22 remaining). L1 verified Session, ownership and Message validation. L2 used assistant-authored valid, invalid and cancellation fixtures to verify the user-written versioned `CreateTurnRequest`, project-specific generation input/output and `ModelClient` accepting `context.Context`. `go test ./... -count=1` and `go vet ./...` passed. L3 is next: authentication, the session API and the model allowlist. S1 completes after acceptance of L1–L4.
 
+### L3部分受入（2026-11-12） / Partial L3 acceptance (2026-11-12)
+
+本人実装の `Principal`、`TokenAuthenticator`、`ModelAllowlist` を確認し、assistantが合成認証fixtureを追加しました。基点は `8b8cba7` と今回の作業treeです。WindowsのGo 1.26.0、`GOTOOLCHAIN=local`、`GOPROXY=off` で `go test ./... -count=1` と `go vet ./...` が成功しました。依存導入・実model実行はありません。
+
+Reviewed the user-written `Principal`, `TokenAuthenticator` and `ModelAllowlist`; the assistant added synthetic authentication fixtures. The code baseline is `8b8cba7` plus this working-tree change. On Windows with Go 1.26.0, `GOTOOLCHAIN=local` and `GOPROXY=off`, `go test ./... -count=1` and `go vet ./...` passed. No dependencies were installed and no real models were run.
+
+検証範囲はtokenからのidentity解決、不正・重複header、tokenの大小文字、設定の空白・空identity、入力mapの変更からの隔離、zero-value拒否です。body・query・独自headerの偽identityが認証結果を上書きしないこと、既存の他user/lab拒否とmodel allowlist fixtureも確認しました。これはcomponent testであり、HTTP経由の認可受入ではありません。
+
+Coverage includes identity resolution from tokens, malformed/duplicate headers, token case sensitivity, whitespace/empty-identity configuration, isolation from input-map mutation and zero-value denial. Tests also verify that forged identity in the body, query or custom headers does not override authentication, plus existing other-user/lab rejection and model-allowlist fixtures. These are component tests, not acceptance of HTTP authorization.
+
+L3は進行中で、完了授業数は2/24のままです。残る成果物は認証のhandler接続と401応答、所有者付きsession作成・取得・一覧、model一覧とallowlist接続です。受入にはHTTP境界での偽identity・他user/lab拒否を含めます。turn処理・fake切替はL4です。今回の明示依頼により、確認済みの本人code、testと日英文書をmain公開対象とします。以前のwebsite公開時のauth草稿除外は今回には適用しません。
+
+L3 remains in progress, with 2/24 lessons complete. Remaining deliverables are handler integration and 401 responses, owner-bound session creation/retrieval/listing, and model listing/allowlist integration. Acceptance must include forged-identity and other-user/lab rejection at the HTTP boundary. Turn processing and fake switching belong to L4. The current explicit request authorizes main publication of the reviewed user code, tests and bilingual documentation; the auth-draft exclusion from earlier website releases does not apply to this release.
+
 ## 今回の資料・website検証 / Documentation and website verification
 
 2026-11-12、基点commit `cc7fe99fd93ab4681ed65e781da1591d0316ecdb` に対する未commitの文書・site・素材変更を確認しました。Python 3.13.12で `python scripts/check_repository.py`（35 files）、Node v24.14.0で `node --check website/assets/demo.js`、`git diff --check` が成功しました。2つの新SVGのXML・title/desc・外部参照／script不在と、日英siteのruntime素材がlocal fileのみであることを確認しました。

@@ -18,6 +18,10 @@ Accepted work through 2026-11-10 (Asia/Tokyo) comprises a localhost-only `GET /h
 
 The user writes research implementation code: Go, Python, the React research UI (`web/`), configuration, migrations, operational scripts and the runner. The assistant owns tests, synthetic fixtures and test-only fakes, provides Chinese/English teaching and review in chat, and maintains requested Japanese/English documentation. The user additionally assigned the public website (`website/`) and visual assets to the assistant on 2026-11-12.
 
+2026-11-12追補：`Principal`、token認証component、model allowlistも合成testで検証しました。認証componentはまだHTTP handlerに接続されておらず、起動時のrouteは引き続き `GET /health` のみです。認証の構造は[契約設計](docs/contracts.md#token-authenticator)、授業の残作業・検証記録は[PLAN.md](PLAN.md)を参照します。
+
+2026-11-12 addendum: synthetic tests also verify `Principal`, the token-authentication component and the model allowlist. Authentication is not yet connected to HTTP handlers; the running server still exposes only `GET /health`. See the [contract design](docs/contracts.md#token-authenticator) for authentication structure and [PLAN.md](PLAN.md) for remaining lesson work and verification records.
+
 ## 読む順序 / Reading order
 
 | 文書 / Document | 内容 / Purpose |

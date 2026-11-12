@@ -2,6 +2,37 @@
 
 更新 / Updated: 2026-11-12。2026-11-10までの受入済み範囲は `GET /health`、`Session`／`Message` domain契約、version 1の `CreateTurnRequest` と `ModelClient` interfaceです。turn handler、認証統合、allowlist、adapterと以下の完全なAPIは未受入の設計です。本人がschema・DTO・handlerを実装し、assistantが契約fixtureとテストを作成します。 / Accepted through 2026-11-10: `GET /health`, Session/Message domain contracts, the version 1 `CreateTurnRequest` and the `ModelClient` interface. The turn handler, integrated authentication, allowlist, adapters and the complete API below remain designs without acceptance. The user implements schemas, DTOs and handlers; the assistant writes contract fixtures and tests.
 
+2026-11-12追補：`Principal`、`TokenAuthenticator`、`ModelAllowlist` はcomponent testで検証済みです。上記のallowlist未受入はHTTP接続について継続します。認証handler、session API、model一覧は未実装で、公開routeは `GET /health` のみです。受入証拠は[PLAN.md](../PLAN.md)に記録します。
+
+2026-11-12 addendum: `Principal`, `TokenAuthenticator` and `ModelAllowlist` are verified by component tests. The outstanding allowlist acceptance above now concerns HTTP integration. Authentication handlers, session APIs and model listing remain unimplemented; the only exposed route is `GET /health`. [PLAN.md](../PLAN.md) records acceptance evidence.
+
+<a id="token-authenticator"></a>
+
+## TokenAuthenticatorの学習契約 / TokenAuthenticator learning contract
+
+`Principal` は一つのidentity（`LabID`, `UserID`）を表します。`principals` は複数形で、server設定の `map[string]Principal`、つまりtoken → identityの対応です。session、chat履歴、model一覧は保存しません。`NewPrincipal` の非空検証だけでは本人確認になりません。
+
+`Principal` represents one identity (`LabID`, `UserID`). The plural `principals` is a server-configured `map[string]Principal`: a token-to-identity mapping. It stores neither sessions nor chat history nor a model list. Nonempty-field checks in `NewPrincipal` alone do not authenticate a caller.
+
+| 名前 / Name | 意味 / Meaning |
+| --- | --- |
+| constructorの `principals` / constructor parameter | 呼出し側から受け取る設定map / Configuration map supplied by the caller |
+| `copied` | 検証したentryを格納する新map / New map holding validated entries |
+| `a.principals` | authenticatorが保持する独立した設定map / Authenticator-owned configuration map |
+| `principal` | 一つのtokenで検索したidentity / One identity resolved from a token |
+
+constructorは空設定・空token・token内の空白・空identityを拒否し、新mapにentryをコピーします。現在のPrincipalはstring fieldのみなので、このコピーで呼出し側のmap変更から隔離できます。設定の読込・実credential配布・更新はまだ接続していません。合成test tokenはtest専用で、実credentialをcode、log、公開文書に置きません。
+
+The constructor rejects empty configuration, empty tokens, whitespace inside tokens and empty identities, then copies entries into a new map. Principal currently contains only string fields, so this isolates authentication from caller-side map mutation. Configuration loading, real-credential provisioning and rotation are not wired up. Synthetic test tokens are test-only; real credentials do not belong in code, logs or public documentation.
+
+`Authenticate(r *http.Request)` はちょうど一つのAuthorization値を要求し、`strings.Fields` でschemeとtokenの二つに分けます。schemeは `Bearer` と大小文字を無視して比較し、tokenは完全一致で検索します。成功時はserverのPrincipalとnil、失敗時は空Principalとtokenを含まないerrorを返します。`*http.Request` は標準HTTP handlerから渡される非nilのrequest pointerで、componentはそのheaderを読み取ります。
+
+`Authenticate(r *http.Request)` requires exactly one Authorization value and uses `strings.Fields` to split it into scheme and token. It compares the scheme to `Bearer` case-insensitively, then looks up the token exactly. Success returns the server-configured Principal and nil; failure returns an empty Principal and an error without the token. `*http.Request` is the non-nil request pointer supplied by a standard HTTP handler; the component reads its headers.
+
+流れは「server設定 → constructorでコピー → Authorizationのtoken検索 → Principal → session所有者検証」です。最後のHTTP認可接続は未実装です。body・query・独自identity headerは認証identityの根拠になりません。401への変換は今後handlerが担当し、認証成功後も `CanAccessSession` による所有者検証が必要です。
+
+The flow is: server configuration → constructor copy → Authorization-token lookup → Principal → session ownership check. The final HTTP authorization wiring is not implemented. Body, query and custom identity headers are not sources of authenticated identity. Future handlers will translate authentication errors into 401 responses; successful authentication still requires ownership authorization with `CanAccessSession`.
+
 ## 正本とscope / Authority and scope
 
 | Record / 記録 | 必須の意味 / Required meaning |
