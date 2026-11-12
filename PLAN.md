@@ -12,6 +12,7 @@
 
 ## 唯一の作業一覧 / Sole action checklist
 
+- [ ] 公開site簡素化（2026-11-12追加依頼）— 九州大学公式siteを版面の参考に、日英websiteを白基調・細線・簡潔な見出しへ整理し、説明図は必要時に開く。成果物はwebsiteと日英設計記録。受入は広幅／狭幅、keyboard、三段階例、local link、認証草稿の保持、main pushと対応するPages deploy・公開確認。 / Public-site simplification (additional request, 2026-11-12): use the Kyushu University website as a layout reference, simplify both languages with white surfaces, fine dividers and concise headings, and reveal the diagram on demand. Deliver the website and bilingual design record; accept wide/narrow layouts, keyboard operation, the three-stage example, local links, preserved authentication drafts, main push and verification of the matching Pages deployment and public site.
 - [x] S0 — 日英文書を案内・構成・契約・UI・評価・資料台帳に整理し、実装済み／提案を区別。 / Organize paired bilingual overview, architecture, contracts, UI, evaluation and source register; distinguish implementation from proposals.
 - [x] 初期scaffoldの確認（2026-11-08）：health、Message、当時の2つのGoテスト。現在の授業受入は下記を参照。 / Initial scaffold check (2026-11-08): health, Message and the two tests present then. See the lesson acceptance record below for subsequent work.
 - [x] S0追補（2026-11-12）— 既存構成を調査し、READMEの案内、UIの情報階層・状態表示、再利用可能な説明用SVGを整理。[視覚設計](docs/design.md)に用途・原本・日英の代替説明を記録。日英対応、実装／提案の区別、local link・SVG構造・描画確認、既存研究codeと未追跡作業の保持を受入。 / S0 follow-up (2026-11-12): reviewed the structure, clarified README navigation and UI hierarchy/states, and created reusable explanatory SVGs. The [visual design reference](docs/design.md) records uses, sources and JA/EN text equivalents. Accepted paired content, implementation/proposal labels, local-link/SVG/render checks and preservation of research code and untracked work.
@@ -96,6 +97,16 @@ Publication evidence (2026-11-12): pushed [commit eee6aca](https://github.com/lo
 commit前の14-file allowlistとstage内容一致を検証し、commit treeに認証3ファイルがないことを確認しました。本人の3ファイルは開始時とSHA-256が一致し、未追跡のまま保持しました。最終の記録更新は文書のみで、site・研究codeを変更しません。
 
 Verified the exact 14-file staging allowlist and its equality with reviewed content, and confirmed the three authentication files were absent from the commit tree. Their SHA-256 hashes matched the starting snapshot and they remained untracked. The final publication-record update changes documentation only, not site or research code.
+
+### 白基調siteの受入 / White-background site acceptance
+
+2026-11-12、基点 `87163c9` から日英siteを白基調に整理しました。九州大学公式siteの白いheader・明確なnavigationを参考にし、大学の素材は転用していません。装飾card・大きな暗色領域を除き、見出し・余白・資料linkを簡潔化しました。既存の継続図はnative `details` で必要時に開きます。参照と設計判断は[視覚設計](docs/design.md)・[資料台帳](docs/sources.md)に記録します。
+
+On 2026-11-12, simplified both site languages from base `87163c9` with white backgrounds. Referenced the Kyushu University site's white header and clear navigation without reusing university assets. Removed the decorative card and large dark areas, tightened headings/spacing/resource links, and made the existing continuity diagram available through native `details`. [Visual design](docs/design.md) and the [source register](docs/sources.md) record the reference and project decisions.
+
+本機browserで日英1280px・320pxと日本語390pxを確認し、検査した幅で横overflowはありませんでした。日英の三段階12→15→15と単一選択状態、Enter／Space、英語skip linkのmain focus、図の展開・画像読込を確認しました。確認tabのerror/warning logは空でした。研究code・SVG原本・依存は変更せず、Go testやmodel評価は再実行していません。main公開は対応するdeploy・公開確認後に完了として記録します。
+
+Local browser review covered both languages at 1280px and 320px, plus Japanese at 390px, without horizontal overflow at inspected widths. Verified the JA/EN 12 → 15 → 15 sequence and single selection, Enter/Space, the English skip link focusing main, and diagram expansion/image loading. The inspected tab had no error/warning logs. Research code, SVG sources and dependencies are unchanged; Go tests and model evaluation were not rerun. Record main publication as complete after verifying its matching deployment and public site.
 
 ## 工数 / Effort
 

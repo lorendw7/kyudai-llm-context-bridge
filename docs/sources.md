@@ -17,13 +17,23 @@ Unless noted, sources were inspected on 2026-11-08. This is upstream-source rese
 
 ## 公開デザイン素材 / Public design assets
 
-2026-11-12参照。既存projectの `website/assets/mark.svg` と `style.css` の梅紫・紙色を再利用しました。新しい[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)はassistant制作の編集可能なSVGです。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
+2026-11-12参照。既存projectの `website/assets/mark.svg` と当初の梅紫・紙色を基に、[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)をassistantが編集可能なSVGとして制作しました。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。同日のwebsite白基調化でもSVG原本は変更せず、図内の紙色とpage背景の白を区別します。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
 
-Inspected 2026-11-12. Reuse the existing project's `website/assets/mark.svg` and the plum/paper colors from `style.css`. The new [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) are assistant-authored, editable SVGs. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
+Inspected 2026-11-12. The assistant authored the editable [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) using the existing `website/assets/mark.svg` and original plum/paper palette as references. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. The website's white-background simplification on the same date leaves the SVG sources unchanged, distinguishing their paper-colored artwork from white page backgrounds. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
 
 これらは設計提案・合成例です。model versionは該当なしで、実modelの応答・研究UI screenshot・benchmarkとして扱いません。外部資料の従来の参照日を今回の描画確認日で上書きしません。
 
 These are design proposals and synthetic examples. Model version is not applicable; they are neither real-model responses, research UI screenshots nor benchmarks. The rendering review date does not replace earlier access dates for external sources.
+
+## 公開siteの版面参照 / Public-site layout reference
+
+| 資料 / Source | 参照日・確認内容 / Inspection date and observation | 採用範囲 / Application |
+| --- | --- | --- |
+| [九州大学公式website / Official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) | 2026-11-12。実際の表示で白いheader、明確なnavigation、梅紫のaccentを確認 / Visually inspected the white header, clear navigation and plum accents on 2026-11-12 | 一般的な情報階層の参考のみ。大学logo・写真・文章・公式brandingは転用しない / Reference for general information hierarchy only; no reuse of university logos, photos, copy or official branding |
+
+本projectの判断は、白 `#ffffff` のpage背景、灰色 `#e5e5e5` の細線、system sans-serifの見出し、少量の既存梅紫accentを使うことです。heroの装飾cardを除き、構成図をnative `details`で必要時に開き、資料linkを簡潔にします。これはproject独自の設計判断で、大学による要件・公認や研究効果の証拠ではありません。新しい画像・依存・font・modelは追加しません。
+
+The project's design decision uses white `#ffffff` page backgrounds, fine gray `#e5e5e5` dividers, system sans-serif headings and small accents in the existing plum color. Remove the decorative hero card, reveal the architecture diagram on demand through native `details`, and simplify resource links. These are independent project decisions, not university requirements, endorsement or evidence of research effectiveness. Add no new images, dependencies, fonts or models.
 
 ## Coreの調査snapshot / Core survey snapshots
 
