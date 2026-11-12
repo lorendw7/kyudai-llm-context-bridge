@@ -6,9 +6,13 @@ Read AGENTS.md, README.md and PLAN.md first. Track work/progress only in PLAN.md
 
 ## 分担 / Ownership
 
-利用者は全実装codeを書きます。backend、worker、React、部品library設定、dependency manifest、schema、migration、起動script、runnerを含みます。assistantはtests、synthetic fixtures、test-only fakes、verification harnessesを実装し、指導・code review・依頼された日英文書を担当します。testが失敗したら原因と修正方針を説明し、本人がproduction codeを直します。
+利用者は研究用の実装codeを書きます。backend、worker、React、部品library設定、dependency manifest、schema、migration、起動script、runnerを含みます。assistantはtests、synthetic fixtures、test-only fakes、verification harnessesを実装し、指導・code review・依頼された日英文書を担当します。testが失敗したら原因と修正方針を説明し、本人が研究用production codeを直します。
 
-The user writes all implementation code: backend, worker, React, component-library configuration, dependency manifests, schemas, migrations, startup scripts and runner. The assistant implements tests, synthetic fixtures, test-only fakes and verification harnesses, and provides teaching, code review and requested bilingual docs. When tests fail, explain the cause and repair direction; the user fixes production code.
+The user writes research implementation code: backend, worker, React, component-library configuration, dependency manifests, schemas, migrations, startup scripts and runner. The assistant implements tests, synthetic fixtures, test-only fakes and verification harnesses, and provides teaching, code review and requested bilingual docs. When tests fail, explain the cause and repair direction; the user fixes research production code.
+
+2026-11-12の例外：利用者が公開 `website/` と美術素材をassistantへ再割当しました。HTML・CSS・JavaScript、説明図、表示検証を含みます。研究UI `web/` の本人実装とMantine・独自CSSなしの方針は維持します。
+
+Exception dated 2026-11-12: the user reassigned public `website/` and visual assets to the assistant, including HTML, CSS, JavaScript, explanatory graphics and display verification. Research UI `web/` remains user-written with Mantine and no handwritten CSS.
 
 ## 一回の授業 / One lesson
 
@@ -58,9 +62,9 @@ The current Go scaffold requires no model/memory packages. These commands do not
 
 Pair Japanese and English by section, rather than providing only a shortened translation. Identifiers/commands are shared; preserve the standard LICENSE text. Keep architecture, contracts, UI, evaluation and sources in their reference documents; README is the entry point. Do not add parallel roadmaps or historical-report collections.
 
-通常の公開はfocused branchとdiff確認を使い、明示されたmain更新・履歴置換の指示がある場合はそれに従います。無関係の変更を保持し、実行したcheckだけを報告します。現在のwebsiteはbuild不要の説明用siteで、研究UIとは別です。code変更は本人、assistantは依頼範囲の文言・link・keyboard・狭幅／広幅・合成3段階を検証します。
+通常の公開はfocused branchとdiff確認を使い、明示されたmain更新・履歴置換の指示がある場合はそれに従います。無関係の変更を保持し、実行したcheckだけを報告します。現在のwebsiteはbuild不要の説明用siteで、研究UIとは別です。2026-11-12以降はassistantがwebsiteのcode・素材・文言・link・keyboard・狭幅／広幅・合成3段階を担当します。
 
-For ordinary publication, use a focused branch and review diffs; explicit main-update/history-replacement instructions take precedence. Preserve unrelated changes and report only executed checks. The existing buildless public website is separate from the research UI. The user owns code changes; the assistant verifies requested wording, links, keyboard/narrow/wide behavior and the three synthetic stages.
+For ordinary publication, use a focused branch and review diffs; explicit main-update/history-replacement instructions take precedence. Preserve unrelated changes and report only executed checks. The existing buildless public website is separate from the research UI. Since 2026-11-12, the assistant owns website code, assets, wording, links, keyboard/narrow/wide behavior and the three synthetic stages.
 
 private chats、credential、weights、DB、raw output、発表archiveをGitへ入れません。ignoreだけに頼らずstage内容を確認します。projectの原著作物は[MIT](LICENSE)、第三者資料は元licenseに従い、大学公認を示唆しません。
 

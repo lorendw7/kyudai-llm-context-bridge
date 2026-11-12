@@ -13,7 +13,17 @@ Unless noted, sources were inspected on 2026-11-08. This is upstream-source rese
 | 確認済み設計選択 / Confirmed design choice | Mantineによる研究UI（2026-11-08） / Mantine for the research UI (2026-11-08) |
 | 設計提案 / Design proposal | SQLite、module境界、性能目標 / SQLite, module boundaries and performance targets |
 | 上流資料・vendor claim / Upstream documentation or vendor claim | 対応provider、公開benchmark、製品説明 / Supported providers, published benchmarks and product descriptions |
-| 実測 / Measured result | 2026-11-08、Go 1.26.0 Windowsで既存2テスト成功。モデル品質は未測定 / Two existing tests passed on Go 1.26.0 Windows; model quality unmeasured |
+| 実測 / Measured result | 2026-11-08の初期scaffold：Go 1.26.0 Windowsで当時の2テスト成功。その後の受入は[PLAN.md](../PLAN.md)。モデル品質は未測定 / Initial scaffold snapshot on 2026-11-08: the two tests present then passed on Go 1.26.0 Windows. Subsequent acceptance is recorded in PLAN.md; model quality remains unmeasured |
+
+## 公開デザイン素材 / Public design assets
+
+2026-11-12参照。既存projectの `website/assets/mark.svg` と `style.css` の梅紫・紙色を再利用しました。新しい[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)はassistant制作の編集可能なSVGです。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
+
+Inspected 2026-11-12. Reuse the existing project's `website/assets/mark.svg` and the plum/paper colors from `style.css`. The new [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) are assistant-authored, editable SVGs. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
+
+これらは設計提案・合成例です。model versionは該当なしで、実modelの応答・研究UI screenshot・benchmarkとして扱いません。外部資料の従来の参照日を今回の描画確認日で上書きしません。
+
+These are design proposals and synthetic examples. Model version is not applicable; they are neither real-model responses, research UI screenshots nor benchmarks. The rendering review date does not replace earlier access dates for external sources.
 
 ## Coreの調査snapshot / Core survey snapshots
 

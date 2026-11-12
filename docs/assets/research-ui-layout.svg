@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">研究UIの配置案 / Research UI layout proposal</title>
+  <desc id="desc">実装画面ではない。広い画面はsession navigation、会話、必要時の出典表示に分け、狭い画面は一列にする。sessionの方式を固定し、次のturn用モデルを入力欄付近で選ぶ。各回答にモデルと状態を残す。memory_pendingでは保存回答を表示し、次の送信を止める。 / Not an implemented screen. Wide layouts separate session navigation, conversation and source inspection on demand; narrow layouts use one column. Policy stays fixed for a session. Choose the next-turn model near the composer and keep each answer's model and state. During memory_pending show the saved answer and block the next send.</desc>
+  <rect width="1400" height="900" fill="#f5f3ef"/>
+  <g font-family="Arial, 'Yu Gothic', Meiryo, sans-serif">
+    <text x="44" y="45" font-size="14" font-weight="700" letter-spacing="2" fill="#7b1746">RESEARCH INTERFACE / 研究UI</text>
+    <text x="44" y="95" font-size="32" font-weight="700" fill="#242125">Keep the conversation in focus.</text>
+    <text x="44" y="129" font-size="19" fill="#68636a">会話を中心に、モデル・状態・出典を見失わない。</text>
+    <text x="1356" y="45" text-anchor="end" font-size="13" fill="#68636a">LAYOUT PROPOSAL / 配置案</text>
+
+    <text x="44" y="181" font-size="15" font-weight="700" fill="#7b1746">WIDE / 広幅</text>
+    <rect x="44" y="200" width="894" height="554" rx="10" fill="#fff" stroke="#ddd7da"/>
+    <path d="M44 266h894M236 266v488" stroke="#ddd7da" fill="none"/>
+    <text x="64" y="239" font-size="20" font-weight="700" fill="#242125">Context Bridge</text>
+    <text x="913" y="239" text-anchor="end" font-size="14" fill="#68636a">Chat / 会話 · Memory / 記憶</text>
+    <text x="64" y="303" font-size="14" font-weight="700" fill="#68636a">SESSIONS / 会話一覧</text>
+    <rect x="56" y="322" width="168" height="54" rx="6" fill="#f5eaf0"/>
+    <rect x="56" y="322" width="3" height="54" fill="#7b1746"/>
+    <text x="70" y="345" font-size="14" font-weight="700" fill="#7b1746">Review / 文献調査</text>
+    <text x="70" y="365" font-size="12" fill="#68636a">Synthetic / 合成例</text>
+    <text x="70" y="411" font-size="14" fill="#68636a">New session / 新規</text>
+
+    <text x="262" y="301" font-size="20" font-weight="700" fill="#242125">Review / 文献調査</text>
+    <text x="262" y="329" font-size="14" fill="#68636a">Owner: demo-user · Policy: Mem0 (fixed / 固定)</text>
+    <rect x="262" y="351" width="648" height="72" rx="6" fill="#f5f3ef"/>
+    <text x="278" y="376" font-size="13" font-weight="700" fill="#68636a">USER / 利用者 · m02</text>
+    <text x="278" y="403" font-size="17" fill="#242125">Correction: Nov 15. / 訂正：11月15日。</text>
+    <rect x="262" y="438" width="648" height="93" rx="6" fill="#fff" stroke="#ddd7da"/>
+    <text x="278" y="464" font-size="13" font-weight="700" fill="#7b1746">MODEL B · SAVED ANSWER / 保存済み回答</text>
+    <text x="278" y="495" font-size="17" fill="#242125">The deadline is Nov 15. / 締切は11月15日です。</text>
+    <text x="278" y="519" font-size="12" fill="#68636a">Synthetic answer / 合成回答</text>
+    <rect x="262" y="545" width="648" height="66" rx="6" fill="#fff4de"/>
+    <text x="278" y="571" font-size="15" font-weight="700" fill="#76510d">memory_pending / 記憶の更新待ち</text>
+    <text x="278" y="595" font-size="14" fill="#76510d">Answer saved. Next send blocked. / 回答保存済み・次の送信は待機。</text>
+    <text x="262" y="643" font-size="14" fill="#68636a">Next-turn model / 次の回答モデル</text>
+    <rect x="570" y="624" width="164" height="31" rx="5" fill="#f5f3ef" stroke="#ddd7da"/>
+    <text x="584" y="645" font-size="14" fill="#68636a">Model A (pending)</text>
+    <rect x="262" y="672" width="472" height="54" rx="6" fill="#faf9f7" stroke="#ddd7da"/>
+    <text x="278" y="704" font-size="14" fill="#68636a">Draft retained / 入力内容を保持</text>
+    <rect x="750" y="672" width="160" height="54" rx="6" fill="#eeebed"/>
+    <text x="830" y="704" text-anchor="middle" font-size="14" fill="#68636a">Wait / 待機</text>
+
+    <text x="982" y="181" font-size="15" font-weight="700" fill="#7b1746">NARROW / 狭幅</text>
+    <rect x="982" y="200" width="374" height="554" rx="10" fill="#fff" stroke="#ddd7da"/>
+    <path d="M982 266h374" stroke="#ddd7da"/>
+    <path d="M1004 226h20m-20 7h20m-20 7h20" stroke="#7b1746" stroke-width="2"/>
+    <text x="1040" y="239" font-size="18" font-weight="700" fill="#242125">Context Bridge</text>
+    <text x="1004" y="302" font-size="20" font-weight="700" fill="#242125">Review / 文献調査</text>
+    <text x="1004" y="329" font-size="13" fill="#68636a">demo-user · Mem0 (fixed / 固定)</text>
+    <rect x="1004" y="351" width="330" height="72" rx="6" fill="#f5f3ef"/>
+    <text x="1020" y="376" font-size="13" font-weight="700" fill="#68636a">m02 · USER / 利用者</text>
+    <text x="1020" y="402" font-size="16" fill="#242125">Nov 15. / 11月15日。</text>
+    <rect x="1004" y="438" width="330" height="93" rx="6" fill="#fff" stroke="#ddd7da"/>
+    <text x="1020" y="466" font-size="13" font-weight="700" fill="#7b1746">MODEL B · SAVED / 保存済み</text>
+    <text x="1020" y="499" font-size="16" fill="#242125">Nov 15. / 11月15日。</text>
+    <rect x="1004" y="545" width="330" height="66" rx="6" fill="#fff4de"/>
+    <text x="1020" y="570" font-size="14" font-weight="700" fill="#76510d">memory_pending / 更新待ち</text>
+    <text x="1020" y="596" font-size="13" fill="#76510d">Next send blocked / 次の送信は待機</text>
+    <text x="1004" y="646" font-size="14" fill="#68636a">Next model / 次のモデル: A</text>
+    <rect x="1004" y="672" width="330" height="54" rx="6" fill="#eeebed"/>
+    <text x="1169" y="704" text-anchor="middle" font-size="14" fill="#68636a">Draft retained · Wait / 入力保持・待機</text>
+
+    <text x="44" y="794" font-size="16" fill="#242125">Sources open on demand. / 出典は必要時に開く。</text>
+    <text x="44" y="822" font-size="15" fill="#68636a">Keep provenance beside memory; return focus after closing. / 記憶に出典を添え、閉じたら操作元へfocusを戻す。</text>
+    <text x="44" y="866" font-size="14" fill="#68636a">Concept only, not a product screenshot. / 製品画面ではなく、設計説明用の図です。</text>
+    <text x="1356" y="866" text-anchor="end" font-size="14" fill="#7b1746">02 / RESEARCH UI</text>
+  </g>
+</svg>

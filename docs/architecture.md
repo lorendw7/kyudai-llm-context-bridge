@@ -1,10 +1,14 @@
 # ADR-001: 保守可能な研究原型 / Maintainable research prototype
 
-日付 / Date: 2026-11-10。状態 / Status: A案は選択済み。domain契約、versioned turn DTO、project固有の `ModelClient` interfaceは実装済みで、以下のpackage分割・adapter・SQLite・UI詳細は設計提案。 / Route A is selected. Domain contracts, the versioned turn DTO and the project-owned `ModelClient` interface are implemented; the package split, adapters, SQLite and UI details below remain design proposals.
+更新 / Updated: 2026-11-12。状態 / Status: A案とMantineは選択済み。2026-11-10受入のdomain契約、versioned turn DTO、project固有の `ModelClient` interfaceを出発点に、以下のpackage分割・adapter・保存・UI境界を設計提案として整理します。 / Route A and Mantine are selected. Starting from the domain contracts, versioned turn DTO and project-owned `ModelClient` interface accepted on 2026-11-10, the package split, adapters, persistence and UI boundaries below remain design proposals.
 
 決定者は利用者です。実装と導入は別途の受入・許可範囲に従います。進捗は[PLAN.md](../PLAN.md)のみで管理します。
 
 The user is the decision maker. Implementation and installation follow their acceptance and authorized scope. Track progress only in [PLAN.md](../PLAN.md).
+
+今回の結論は、Goを一つのapplicationとして維持し、外部I/Oをadapterで隔離する構成です。新しいpackageは独立した変更理由・実際の依存・test境界が生まれた時に追加します。研究機能codeの移動や実装は本人が担当し、今回の整理で実施済みとはしません。
+
+The proposal keeps Go as one application and isolates external I/O behind adapters. Add a package when an independent reason to change, a real dependency or a useful test boundary appears. The user owns research-code extraction and implementation; this design revision does not claim that work is done.
 
 ## 目的と選択肢 / Context and options
 
@@ -36,32 +40,64 @@ SQLiteをJSON snapshotより推奨する理由は、message・turn・request ID�
 
 SQLite is preferred over JSON snapshots because messages, turns, request IDs and pending updates can be stored together transactionally. It adds a driver and schema-migration learning. Initial contract exercises use a user-written in-memory repository; only test-only fakes are assistant-owned.
 
-## モジュール境界 / Module boundaries
+## 実行時の境界 / Runtime boundaries
+
+```mermaid
+flowchart LR
+    UI["React + Mantine / 研究UI"] -->|"HTTP /v1"| Go["Go bridge / 会話・権限・状態"]
+    Runner["Evaluation runner / 評価実行"] -->|"HTTP /v1"| Go
+    Go --> Source["SQLite / 正本・更新待ち"]
+    Go -->|"generation / 推論"| Ollama["Ollama / ローカルモデル"]
+    Go -->|"versioned HTTP / 版付き契約"| Worker["Python worker / Mem0 OSS"]
+    Worker --> Derived["Qdrant local + history / 派生情報"]
+    Worker -->|"helper + embedding / 補助モデル"| Ollama
+```
+
+これは予定のruntime呼出し図で、Goのimport図ではありません。基本はGo・Python worker・Ollamaの3 processです。Goが研究UIの静的buildを配信し、Node/Viteは開発・build時に使います。runnerは必要時だけ起動し、同じnative APIを呼びます。公開 `website/` は別の説明用siteで、研究APIやDBに接続しません。
+
+This is a proposed runtime-call diagram, not a Go import graph. The core has three processes: Go, the Python worker and Ollama. Go serves the research UI's static build; Node/Vite are development/build tools. The runner starts only when needed and uses the same native API. Public `website/` is a separate information site without access to the research API or databases.
+
+## モジュール境界と依存規則 / Module boundaries and dependency rules
 
 すべて以下は予定構成です。現コードを自動移動・書換えしません。小さい間はpackageを増やしすぎず、利用側に小さなinterfaceを定義します。application/domainはHTTP、SQLite、Mem0、Reactに依存しません。
 
 Everything below is a target structure. Existing code is not automatically moved or rewritten. Keep packages modest and define small interfaces at their consumers. Application/domain code must not depend on HTTP, SQLite, Mem0 or React.
 
-| Module / 予定場所 | 責務と境界 / Responsibility and boundary | 交換・検証 / Replacement and verification |
+| Module / 予定場所 | 責務と境界 / Responsibility and boundary | 変更・検証の接点 / Change and test boundary |
 | --- | --- | --- |
-| Domain / `internal/domain` | Session、Message、Turn、Scope、revision。外部I/Oなし / Core records, scope and revision; no external I/O | 不変条件・訂正・削除のunit tests / Invariant, correction and deletion unit tests |
-| Application / `internal/app` | session作成、turn進行、model切替、export/delete、回復を調整 / Coordinates sessions, turns, switching, export/delete and recovery | 下記portのfakeで状態遷移を検証 / State transitions with port fakes |
-| Identity / `internal/auth` | credential→Principal、session所有権。clientのidentity指定を信用しない / Credential→Principal and ownership; never trust client identity fields | 他user/lab、期限切れ、偽scopeを拒否 / Deny other users/labs, expiry and forged scope |
-| HTTP / `internal/transport/httpapi` | DTO、入力制限、status/error変換、UI静的配信 / DTOs, input limits, status/error mapping and UI static serving | schemaとHTTP契約。business ruleを置かない / Schema/HTTP tests; no business rules |
-| Policies / `internal/contextpolicy` | full history、rolling summary、Mem0 + recent。token予算内のContextPlan / Three policies produce a budgeted ContextPlan | 同じfixture・budget・overflow条件 / Same fixtures, budget and overflow conditions |
-| Models / `internal/adapters/ollama` | `ModelClient`、capabilities、usage変換、取消 / ModelClient, capabilities, usage mapping and cancellation | 記録した合成HTTP応答と許可済み実連携 / Synthetic recorded HTTP responses and authorized integration |
-| Token budget / `internal/tokenbudget` | template込み入力と出力予約。推定／実測を区別 / Templated input plus output reserve; distinguish estimates/measurements | tokenizer/runtime一致fixture。不明なら評価対象外 / Tokenizer/runtime fixtures; unresolved counts block evaluation |
-| Source repository / `internal/adapters/sqlite` | `SessionRepository`、transaction、turnとjob記録 / Repository, transactions, turns and pending-operation records | restart、重複、migration、restore / Restart, duplicate, migration and restore tests |
-| Memory adapter / `internal/adapters/memoryhttp` | versioned worker API、timeout、operation ID、error変換 / Versioned worker API, timeout, operation ID and errors | worker契約suiteを固定 / Stable worker contract suite |
-| Worker / `memory-worker` | Mem0呼出し、scope、出典mapping、Qdrant/history、idempotent operation状態 / Mem0, scope, provenance mapping, Qdrant/history and idempotent operation state | Mem0更新時は隔離・訂正・削除suiteを再実行 / Rerun isolation/correction/deletion suite for Mem0 upgrades |
-| Metrics / `internal/metrics` | stage、時間、token、欠測理由。本文をlogしない / Stage/time/tokens/missing reasons; no content logging | 合成計算fixture、schema version / Synthetic accounting fixtures and schema version |
-| Runner / `cmd/evaluate` | frozen case・config読込、API再生、checkpoint、結果集計 / Frozen cases/config, API replay, checkpoints and aggregation | fake API再生、途中再開、dataset分離 / Fake replay, resume and dataset separation |
-| UI / `web/src` | backend状態の表示と操作。記憶処理・採点なし / Displays/operates backend state; no memory policy or scoring | component/API/E2E tests。詳細は[UI設計](ui.md) / Component/API/E2E tests; see UI design |
-| Composition / `cmd/bridge`, `configs`, `scripts` | 設定検証、portの組立、readiness、停止 / Config validation, wiring, readiness and shutdown | 不正設定、起動失敗、子process終了 / Invalid config, startup failure and child-process cleanup |
+| Domain / `internal/domain` | Session、Message、Turn、Principal/Scopeの値と不変条件。外部I/Oなし / Core values and invariants, including identity/scope; no external I/O | 純粋な所有権・role・状態規則のunit tests / Pure ownership, role and state-rule unit tests |
+| Application / `internal/app` | session、turn、回復、export/deleteのuse caseと消費側port。state変更を決定 / Use cases and consumer-owned ports; decides state transitions | session/turn/recovery/data操作をまず同packageの別fileに分け、fakeで検証 / Separate responsibility files within one package first; test with fakes |
+| HTTP / `internal/transport/httpapi` | versioned DTO、認証結果の受渡し、入力制限、HTTP error変換、UI配信 / Versioned DTOs, authenticated identity forwarding, input limits, HTTP error mapping and UI serving | domain/use-case型との境界mapping。認可判断をhandlerに重複させない / Boundary mapping; do not duplicate use-case authorization in handlers |
+| Adapters / `internal/adapters/{ollama,sqlite,memoryhttp}` | 外部の推論・正本保存・worker通信をそれぞれ隔離 / Isolate inference, source persistence and worker communication separately | 実際の連携時に作成。provider応答、短transaction、timeout・errorの契約 / Create with real integrations; provider responses, short transactions and timeout/error contracts |
+| Worker / `memory-worker` | Python内でAPI境界、operation調整、Mem0依存、派生store所有を分ける / Separate API handling, operation coordination, Mem0 dependency and derived-store ownership inside Python | HTTP handlerから直接storeを触らない。source mapping、重複、訂正、削除を検証 / Handlers do not manipulate stores directly; test mapping, duplicates, corrections and deletion |
+| UI / `web/src` | appが認証・session・画面間連携を所有。featuresが表示と操作を担当 / App owns auth/session/cross-view coordination; features own views and interaction | `app → features → lib/api → lib/contracts`。詳細は[UI設計](ui.md) / See UI design for dependency and test seams |
+| Runner / `cmd/evaluate` | frozen case/config、API再生、checkpoint、結果集計 / Frozen input, API replay, checkpoints and aggregation | native APIだけを利用し、DBやmemoryへ直接書込まない / Use only the native API; never write directly to DB or memory |
+| Composition / `cmd/bridge` | 設定検証、具体adapterの生成・注入、起動・readiness・停止 / Validate config, construct/inject concrete adapters, start, report readiness and stop | 構築と終了だけを調整し、会話のbusiness ruleを置かない / Coordinate construction/lifecycle without conversation business rules |
 
-主要portは `ModelClient`, `MemoryClient`, `SessionRepository`, `ContextPolicy`, `TokenCounter`, `MetricsSink`。domain型を使い、vendor SDK objectを返しません。UIはversioned DTOのみを参照します。契約の詳細は[contracts.md](contracts.md)です。
+port候補は `ModelClient`, `MemoryClient`, `SessionRepository`, `ContextPolicy`, `TokenCounter`, `MetricsSink`。domain値とproject固有のuse-case入出力型を使い、vendor SDK objectを返しません。現在のuse caseが必要なportだけを導入します。UIはversioned DTOのみを参照します。契約の詳細は[contracts.md](contracts.md)です。
 
-Core ports are ModelClient, MemoryClient, SessionRepository, ContextPolicy, TokenCounter and MetricsSink. They use domain types and do not return vendor SDK objects. The UI consumes versioned DTOs only. See [contracts.md](contracts.md).
+Candidate ports are ModelClient, MemoryClient, SessionRepository, ContextPolicy, TokenCounter and MetricsSink. They use domain values and project-owned use-case input/output types, not vendor SDK objects. Introduce only the ports a current use case needs. The UI consumes versioned DTOs only. See [contracts.md](contracts.md).
+
+Goの依存方向は `httpapi → app → domain` と `adapters → app/domain` です。`cmd/bridge` だけが具体adapterとuse caseを組み立てます。domainは他のproject layerをimportせず、appはHTTP DTO・SQL driver・Ollama/Mem0型をimportしません。app側が必要最小限のinterfaceを定義し、adapterが実装します。大きな共通 `ports`／`utils` packageへ型を集めません。
+
+Go dependencies point `httpapi → app → domain` and `adapters → app/domain`. Only `cmd/bridge` wires concrete adapters into use cases. Domain imports no other project layer; app imports no HTTP DTOs, SQL drivers or Ollama/Mem0 types. App defines the small interfaces it consumes and adapters implement them. Do not collect every type into broad `ports` or `utils` packages.
+
+credential→Principalの検証はHTTP境界の責務、Principalと対象sessionの認可はuse caseの責務です。認証providerが独立して変化するときだけ `internal/auth` に抽出します。policy・token予算・metricsは初めはapp内の小さい部品でよく、独立した実装が必要になった時に `internal/contextpolicy` 等へ抽出し、appへ注入します。appと実装packageが互いをimportする構成にしません。
+
+Credential-to-Principal verification belongs at the HTTP boundary; authorization of that Principal for the target session belongs in the use case. Extract `internal/auth` when authentication providers need to change independently. Policies, token budgets and metrics can begin as small app-local components. Extract packages such as `internal/contextpolicy` when independent implementations are needed, then inject them into app. Avoid app/implementation import cycles.
+
+### 段階的な抽出 / Incremental extraction
+
+以下は[PLAN.md](../PLAN.md)の段階との対応であり、追加の作業一覧ではありません。空directoryや全interfaceを先に作らず、一つの責務を抽出するたびに既存契約・失敗動作を維持して確認します。
+
+This maps to the stages in [PLAN.md](../PLAN.md), not a second task list. Do not pre-create empty directories or every interface. Extract one responsibility at a time and verify that existing contracts and failure behavior stay intact.
+
+| 段階 / Stage | 分離する理由と範囲 / Reason and scope |
+| --- | --- |
+| S1 | 契約とHTTP処理が安定した時にdomain/app/httpapiを順に抽出。現在の学習codeを一括移動しない / Extract domain/app/httpapi as contracts and HTTP behavior stabilize; no bulk relocation of learning code |
+| S2 | 実Ollama・SQLite接続が出現した時にadapterを追加。保存の原子操作を先に定義 / Add adapters with actual Ollama/SQLite integrations; define atomic storage operations first |
+| S3 | worker境界と3方式の違いが出現した時にmemory adapterとpolicyを分離 / Separate the memory adapter and policies when worker integration and three distinct policies exist |
+| S4–S5 | webとrunnerをnative API上に構築。必要な計測を追加し、再利用と独立更新の必要がある部分だけ抽出 / Build web and runner on the native API; add metrics and extract only for real reuse or independent updates |
 
 ## データと失敗 / Data and failures
 
@@ -69,17 +105,46 @@ Core ports are ModelClient, MemoryClient, SessionRepository, ContextPolicy, Toke
 
 Source messages are authoritative. Summaries, memories, vectors and browser views are derived. Memory retains source IDs, revision and extraction version; assistant output is not automatically promoted to a verified fact. Switching models preserves session ID, owner, policy and sources; helper/embedding models stay fixed within an experiment.
 
-1. 認証・所有者確認→request IDとuser messageを保存→context作成。 / Authenticate/authorize → save request ID and user message → assemble context.
-2. 推論→answerとusage、memory更新待ち記録を一つの正本transactionで保存。 / Generate → save answer, usage and pending memory operation in one source transaction.
-3. workerで更新→operation結果を保存→turn完了。 / Update through the worker → save operation result → complete the turn.
+| 所有者 / Owner | 決定・保存する内容 / Decisions and persisted content |
+| --- | --- |
+| Go app | session/turnの状態遷移、認可、policy/model選択、回復判断 / Session/turn transitions, authorization, policy/model selection and recovery decisions |
+| SQLite adapter | 正本message、turn、重複key、更新待ち記録を原子的に保存。制約を実施 / Atomically persist authoritative messages, turns, deduplication keys and pending work; enforce constraints |
+| Python worker | 派生記憶、vector、history、出典mapping、worker operation結果。Goのturnを直接更新しない / Derived memory/vectors/history/provenance and worker-operation results; never directly mutate Go turns |
+| UI / runner | APIから受け取ったsnapshotと操作意図。正本や権限を独自決定しない / API snapshots and user/run intent, without independently defining authority or access |
+
+1. 認証・所有者確認後、request ID／payload、user message、初期turn状態を短transactionで保存し、同sessionのactive turnが一つという制約を守る。 / After authentication/authorization, atomically persist request identity/payload, user message and initial turn state while enforcing one active turn per session.
+2. transactionを閉じてcontext組立・推論を行う。answer、usage、派生更新が必要な場合の更新意図を別の短transactionで保存する。 / Close the transaction before context construction/inference. Atomically save the answer, usage and, when needed, derived-update intent in a separate short transaction.
+3. transaction外でworkerへ更新を要求し、結果を照合してGoが完了を保存する。派生更新不要のpolicyは直接完了する。 / Request the worker update outside a transaction; Go reconciles the result and records completion. Policies without derived updates complete directly.
+
+Repository portは上記の原子操作を表現します。一般的なCRUDの寄せ集めでuse caseに途中状態を組み立てさせず、SQL transactionやdriver型をappへ公開しません。revisionの意味・増分主体・削除後の遅延write拒否は[契約設計](contracts.md)に集約します。
+
+The repository port expresses these atomic operations. Avoid generic CRUD that forces use cases to assemble partially committed state; expose neither SQL transactions nor driver types to app. Revision meanings, increment owners and rejection of writes after deletion are defined in [contracts.md](contracts.md).
+
+Go側も、要求受理・回答保存・回復完了の各transactionで、sessionが `deleting/deleted` でなく、operation開始時の `session_epoch` と一致することを原子的に確認します。不一致なら正本への書込を拒否します。worker側の検査だけに依存せず、削除後に遅い推論回答が正本へ戻る経路を閉じます。
+
+Go also atomically checks, inside request-acceptance, answer-save and recovery-completion transactions, that the session is neither deleting nor deleted and its `session_epoch` matches the operation's starting epoch. Reject source writes on mismatch. Worker checks alone are insufficient: a late inference result must not recreate authoritative content after deletion.
 
 正本DBとQdrantは同じtransactionにはできません。追加queue serviceは使わず、DBの更新待ち記録を再調停します。answer保存後のmemory失敗は `memory_pending` として可視化し、回復まで次turnを止めます。不確定な推論・writeを無条件に再送せず、exactly-once inferenceは主張しません。
 
 The source DB and Qdrant cannot share a transaction. Reconcile pending DB operations without adding a queue service. A memory failure after answer persistence becomes visible as memory_pending and blocks the next turn until recovery. Do not blindly retry uncertain inference/writes or claim exactly-once inference.
 
-sessionごとに同時実行は1turn、最初のGPU実行も直列です。削除開始時にrevisionを進め、遅延writeを拒否し、全派生store・content-bearing checkpointを削除して検証します。削除APIは物理媒体の完全消去を保証しません。
+sessionごとに同時実行は1turn、最初のGPU実行も直列です。削除開始時に `session_epoch` を進め、遅延writeを拒否し、全派生store・content-bearing checkpointを削除して検証します。削除APIは物理媒体の完全消去を保証しません。
 
-Allow one active turn per session and initially serialize GPU work. Deletion advances the revision, rejects late writes, purges all derived stores/content-bearing checkpoints and verifies completion. The deletion API does not promise physical-media erasure.
+Allow one active turn per session and initially serialize GPU work. Deletion advances `session_epoch`, rejects late writes, purges all derived stores/content-bearing checkpoints and verifies completion. The deletion API does not promise physical-media erasure.
+
+### 実行の寿命 / Execution lifecycle
+
+202を返す前に受理状態を永続化します。appが同じGo process内の有界な実行・回復を管理し、HTTP handlerが所有者不明のgoroutineを要求ごとに放置しません。受理済みjobはHTTP切断で取消にならず、明示cancel APIを使います。起動時は受理済み・更新待ち記録を照合し、不確定な推論は `recovery_required` として可視化します。再起動後の無条件再生成は行いません。
+
+Persist acceptance before returning 202. App owns bounded execution and recovery inside the Go process; HTTP handlers must not leave unmanaged per-request goroutines. Disconnecting HTTP does not cancel accepted work; cancellation uses the explicit API. Startup reconciles accepted/pending records and exposes uncertain inference as `recovery_required`, without blind regeneration after restart.
+
+永続化前のS1のin-memory演習ではprocess内の状態遷移だけを検証し、再起動回復は主張しません。上記の耐久性はS2の正本保存受入後に検証します。
+
+Before persistence, S1 in-memory exercises verify process-local transitions without claiming restart recovery. Verify the durability above only after authoritative storage is accepted in S2.
+
+組立入口がprocessの停止signalと期限を渡し、まず新しい受理を止め、進行中処理を確定または回復可能な状態にしてから接続を閉じます。workerもoperation状態を記録します。process自身が起動していないOllama等を暗黙停止しません。livenessと依存readinessを区別し、具体的な期限・上限は実装時に設定契約で固定します。
+
+The composition root supplies shutdown signals/deadlines: stop new acceptance, settle active work or preserve recoverable state, then close resources. The worker records operation state too. Do not implicitly terminate an Ollama process that this process did not start. Separate liveness from dependency readiness; freeze actual deadlines and bounds in the implementation's configuration contract.
 
 ## 更新と回復の設計 / Upgrade and recovery design
 
@@ -87,7 +152,7 @@ Allow one active turn per session and initially serialize GPU work. Deletion adv
 | --- | --- | --- |
 | React/Mantine/Vite | native `/v1` DTO | lockfile、build ID、直前のUI artifactを保持。API互換テスト / Lockfile/build ID, retain previous UI artifact, API contract tests |
 | Go内部 / Go internals | domain invariants、ports、API | package単位で変更、unit/contract回帰 / Change by package; unit/contract regression |
-| API/worker | `/v1`、`schema_version`、capability情報 / Version and capability information | 追加fieldは互換、削除・意味変更は新version。非互換なら起動拒否 / Additive fields compatible; removal/semantic change needs new version; reject incompatibility at startup |
+| API/worker | `/v1`、`schema_version`、capability情報 / Version and capability information | 旧consumerが無視できる任意response fieldだけを互換追加とする。必須field・enum・意味変更は互換性判定とversion移行 / Only optional response fields older consumers can ignore are compatible additions; required fields, enums and semantics require compatibility review and version migration |
 | SQLite schema | repository port | migration IDとbackup。private copyで移行・restore検証後に適用 / Migration IDs/backups; test migration/restore on private copies before use |
 | Mem0/Qdrant | worker contract | 新しいnamespace/storeへ再構築して比較。旧storeを直接書換えない / Rebuild into a new namespace/store and compare; do not overwrite the old store directly |
 | embedding model/dimension | source IDsとmemory schema / Source IDs and memory schema | vector再生成、新collection、切替前照合 / Re-embed into a new collection and verify before switching |
@@ -101,6 +166,24 @@ Upgrade one dependency family at a time and lock production/test dependencies. R
 削除済みデータをbackupから復活させないため、restore時も削除台帳を適用します。backup、WAL、exportの保持・削除範囲を文書化します。Genkaiではlocal storageとprivate永続storageを区別し、共有filesystem上のlive SQLite/WALを前提にしません。
 
 Apply the deletion ledger during restore to avoid resurrecting deleted data. Document retention/deletion of backups, WAL and exports. On Genkai, distinguish local storage from private persistent storage; do not assume live SQLite/WAL is safe on a shared filesystem.
+
+## 変更の範囲と検証 / Change scope and verification
+
+| 変更例 / Change example | 主に変更する場所 / Primary change location | 受入証拠 / Acceptance evidence |
+| --- | --- | --- |
+| 推論providerの応答形式 / Provider response shape | Ollama adapterと対応fixture / Adapter and corresponding fixtures | ModelClient契約、usage欠測、timeout・取消 / ModelClient contract, missing usage, timeout/cancellation |
+| 訂正・turn回復の規則 / Correction or recovery rule | domain/appと契約正本 / Domain/app and contract reference | 同じ合成入力で状態・重複・回復の回帰 / State, duplicate and recovery regression with the same synthetic inputs |
+| Mem0更新 / Mem0 upgrade | Worker内部、依存lock、必要ならworker protocol / Worker internals, locks and protocol only if necessary | 出典、scope隔離、削除、operation replay / Provenance, scope isolation, deletion and replay |
+| UI library更新 / UI library upgrade | webのview・provider設定とlock / Web views/provider setup and locks | DTO境界を保ったkeyboard、IME、狭幅、削除後cache検証 / Stable DTO boundaries plus keyboard, IME, narrow layout and deletion-cache checks |
+| DB schema変更 / DB schema change | SQLite adapterとmigration / Adapter and migration | 前版snapshotからの移行・restore、整合制約 / Migration/restore from the prior snapshot and integrity constraints |
+
+package数ではなく、変更理由が一か所に収まり、外部依存をfakeへ置換でき、失敗の意味が境界で維持されることを保守性の基準にします。新しい抽象化には実際の利用者を必要とし、共通wrapper・plugin機構・event busを先に作りません。構造reviewではimport循環・vendor型の漏出・正本への二重書込を確認します。
+
+Maintainability means one place for a reason to change, replaceable external dependencies and preserved failure semantics across boundaries, rather than a larger package count. Require actual consumers for new abstractions; do not prebuild wrapper libraries, plugin systems or event buses. Structure review checks import cycles, leaking vendor types and multiple writers to authoritative data.
+
+利点はprovider・store・UI更新の影響を閉じ込められることです。一方、境界のDTO変換、fake契約の維持、Go/worker間の部分失敗処理は必要になります。初期版では短い明示的なmappingと少数の契約fixtureを優先し、code generation基盤は契約が安定してから再検討します。
+
+This limits the impact of provider, storage and UI changes. The cost is explicit DTO mapping, maintaining fake contracts and handling partial failures between Go and the worker. Initially favor small explicit mappings and a few meaningful contract fixtures; reconsider code generation only after contracts stabilize.
 
 ## 見直す条件 / Revisit triggers
 

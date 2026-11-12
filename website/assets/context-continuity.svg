@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">同じ会話を異なるモデルで継続する / Continue one conversation across models</title>
+  <desc id="desc">設計案・合成例。モデルAで11月12日を指定し、Bで15日に訂正し、Aへ戻る際も訂正を保持することを目指す。所有者と方式は同じsessionに固定する。原メッセージが正本で、記憶は出典m02とrevisionを持つ派生情報。実行結果ではない。 / Design proposal and synthetic example: set November 12 with model A, correct it to November 15 with B, then aim to retain the correction when returning to A. Owner and policy remain fixed within the session. Source messages are authoritative; derived memory references m02 and a revision. This is not a measured result.</desc>
+  <rect width="1200" height="680" fill="#f5f3ef"/>
+  <g font-family="Arial, 'Yu Gothic', Meiryo, sans-serif">
+    <rect x="48" y="40" width="8" height="24" fill="#7b1746"/>
+    <text x="72" y="57" font-size="14" font-weight="700" letter-spacing="2" fill="#7b1746">CONTEXT BRIDGE / 文脈の継続</text>
+    <text x="1152" y="57" text-anchor="end" font-size="13" fill="#68636a">DESIGN PROPOSAL / 設計案</text>
+    <text x="48" y="109" font-size="34" font-weight="700" fill="#242125">One session. Different models.</text>
+    <text x="48" y="144" font-size="20" fill="#68636a">モデルが変わっても、同じ会話を続ける。</text>
+
+    <rect x="48" y="178" width="1104" height="254" rx="12" fill="#fff" stroke="#ddd7da"/>
+    <text x="72" y="212" font-size="16" font-weight="700" fill="#242125">synthetic-session-01</text>
+    <text x="1128" y="212" text-anchor="end" font-size="16" fill="#68636a">Same owner + policy / 同じ所有者・方式</text>
+
+    <rect x="72" y="238" width="296" height="134" rx="8" fill="#f5f3ef"/>
+    <text x="92" y="268" font-size="13" font-weight="700" letter-spacing="1" fill="#7b1746">01 / MODEL A</text>
+    <text x="92" y="302" font-size="19" font-weight="700" fill="#242125">Set a deadline / 締切を設定</text>
+    <text x="92" y="342" font-size="22" fill="#242125">Nov 12 / 11月12日</text>
+    <path d="M381 304h27m-9-7 9 7-9 7" fill="none" stroke="#7b1746" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="452" y="242" width="296" height="134" rx="8" fill="#ddd7da"/>
+    <rect x="440" y="238" width="296" height="134" rx="8" fill="#7b1746"/>
+    <text x="460" y="268" font-size="13" font-weight="700" letter-spacing="1" fill="#fff">02 / MODEL B</text>
+    <text x="460" y="302" font-size="19" font-weight="700" fill="#fff">Correct it / 締切を訂正</text>
+    <text x="460" y="342" font-size="22" fill="#fff">Nov 15 / 11月15日</text>
+    <path d="M761 304h27m-9-7 9 7-9 7" fill="none" stroke="#7b1746" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="832" y="238" width="296" height="134" rx="8" fill="#f5f3ef"/>
+    <text x="852" y="268" font-size="13" font-weight="700" letter-spacing="1" fill="#7b1746">03 / MODEL A</text>
+    <text x="852" y="302" font-size="19" font-weight="700" fill="#242125">Retain it / 訂正保持が目標</text>
+    <text x="852" y="342" font-size="22" fill="#242125">Nov 15 / 11月15日</text>
+    <path d="M220 384v14h760v-14" fill="none" stroke="#7b1746" stroke-width="1.5"/>
+    <circle cx="588" cy="398" r="4" fill="#7b1746"/>
+
+    <path d="M307 432v28m588-28v28" fill="none" stroke="#aaa0a7" stroke-width="1.5" stroke-dasharray="4 5"/>
+    <rect x="48" y="460" width="522" height="152" rx="10" fill="#fff" stroke="#ddd7da"/>
+    <rect x="48" y="480" width="4" height="112" fill="#7b1746"/>
+    <text x="72" y="495" font-size="21" font-weight="700" fill="#242125">Source messages / 原文が正本</text>
+    <text x="72" y="533" font-size="17" fill="#68636a">m01 · Nov 12 → m02 · Nov 15</text>
+    <text x="72" y="575" font-size="16" fill="#68636a">Keep the correction record / 訂正の履歴を保持</text>
+    <path d="M584 534h31m-9-7 9 7-9 7" fill="none" stroke="#7b1746" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="630" y="460" width="522" height="152" rx="10" fill="#fff" stroke="#ddd7da"/>
+    <text x="654" y="495" font-size="21" font-weight="700" fill="#242125">Derived memory / 派生記憶</text>
+    <text x="654" y="533" font-size="17" fill="#68636a">Deadline / 締切 · Nov 15</text>
+    <text x="654" y="575" font-size="16" fill="#68636a">source: m02 · revision: 2 / 出典と更新版</text>
+    <text x="48" y="649" font-size="14" fill="#68636a">Synthetic example, not an execution result. / 合成例であり、実行結果ではありません。</text>
+    <text x="1152" y="649" text-anchor="end" font-size="14" fill="#7b1746">01 / CONTINUITY</text>
+  </g>
+</svg>

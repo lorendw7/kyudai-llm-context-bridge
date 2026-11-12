@@ -1,26 +1,29 @@
 # 作業計画 / Plan
 
-更新 / Updated: 2026-11-10 (Asia/Tokyo)。本書だけが作業・進捗の一覧です。他の文書は設計・学習資料です。 / This is the sole action and progress checklist. Other documents contain design and learning references.
+更新 / Updated: 2026-11-12 (Asia/Tokyo)。本書だけが作業・進捗の一覧です。他の文書は設計・学習資料です。 / This is the sole action and progress checklist. Other documents contain design and learning references.
 
 ## 方針 / Decisions
 
 - A案（Go + Ollama + Mem0 OSS）は2026-11-06に利用者が選択。教員承認、玄界account・計算枠は利用者の報告です。 / Route A was selected by the user on 2026-11-06. Supervisor approval and Genkai account/allocation are user-reported.
 - 2026-11-08：小型の自作研究UIにReact + TypeScript + Vite + Mantineを選択。独自CSSは初期範囲に含めない。SQLite正本保存を提案。正確なpackage versionsは未固定。 / React + TypeScript + Vite + Mantine were selected for the small owned research UI. Handwritten CSS is outside the initial scope. SQLite authoritative storage is proposed. Exact package versions are not frozen.
-- 利用者が全実装コード・設定・script・移行・runnerを書く。assistantはテスト、合成fixture、test-only fake、指導・レビュー、依頼された日英文書を担当。 / The user writes all implementation code, configuration, scripts, migrations and runner. The assistant owns tests, synthetic fixtures, test-only fakes, teaching/review and requested bilingual documentation.
+- 利用者が研究用実装コード・設定・script・移行・runnerを書く。assistantはテスト、合成fixture、test-only fake、指導・レビュー、依頼された日英文書を担当。2026-11-12の明示的再割当により公開 `website/` と美術素材もassistantが担当する。研究UI `web/` は本人担当のまま。 / The user writes research implementation code, configuration, scripts, migrations and runner. The assistant owns tests, synthetic fixtures, test-only fakes, teaching/review and requested bilingual documentation. The explicit reassignment on 2026-11-12 also gives the assistant responsibility for public `website/` and visual assets; research UI `web/` remains user-owned.
 - OSSとローカル実行が必須。導入・download・有料API・遠隔実行は許可範囲に従う。要件・提案・vendor claim・実測を区別。 / OSS and a local route are required. Installation, downloads, paid APIs and remote runs follow authorized scope. Separate requirements, proposals, vendor claims and measurements.
 - 公開は現在資料のみ。履歴置換は今回の作業ではない。発表archiveはignored `presentations/` に保持。 / Publish current material only. History replacement is not part of this task. Presentation archives remain under ignored `presentations/`.
 
 ## 唯一の作業一覧 / Sole action checklist
 
 - [x] S0 — 日英文書を案内・構成・契約・UI・評価・資料台帳に整理し、実装済み／提案を区別。 / Organize paired bilingual overview, architecture, contracts, UI, evaluation and source register; distinguish implementation from proposals.
-- [x] 既存scaffold：health、Message、2つのGoテストを確認。 / Existing scaffold: health, Message and two Go tests checked.
+- [x] 初期scaffoldの確認（2026-11-08）：health、Message、当時の2つのGoテスト。現在の授業受入は下記を参照。 / Initial scaffold check (2026-11-08): health, Message and the two tests present then. See the lesson acceptance record below for subsequent work.
+- [x] S0追補（2026-11-12）— 既存構成を調査し、READMEの案内、UIの情報階層・状態表示、再利用可能な説明用SVGを整理。[視覚設計](docs/design.md)に用途・原本・日英の代替説明を記録。日英対応、実装／提案の区別、local link・SVG構造・描画確認、既存研究codeと未追跡作業の保持を受入。 / S0 follow-up (2026-11-12): reviewed the structure, clarified README navigation and UI hierarchy/states, and created reusable explanatory SVGs. The [visual design reference](docs/design.md) records uses, sources and JA/EN text equivalents. Accepted paired content, implementation/proposal labels, local-link/SVG/render checks and preservation of research code and untracked work.
+- [x] S0設計追補（2026-11-12明示依頼）— modular monolithの依存規則、state/store所有者、段階的package分割、UI境界と変更時の検証を日英で整理。状態名・revision意味・session全体のexport/deleteを整合。研究機能codeの再配置・実装は未実施。 / S0 architecture follow-up (explicitly requested 2026-11-12): documented modular-monolith dependency rules, state/store ownership, incremental package extraction, UI boundaries and change-focused validation in JA/EN. Aligned state names, revision semantics and session-wide export/delete. Research functional code was not relocated or implemented.
+- [ ] main公開（2026-11-12明示依頼）— 文書・website・素材だけを選択commitしてpushし、同じcommitのPages deployと公開ページを確認する。作業中の認証3ファイルと研究機能codeは対象外。 / Main publication (explicitly requested 2026-11-12): selectively commit and push documentation, website and assets, then verify Pages deployment for that commit and the public page. Exclude the three authentication work-in-progress files and research functional code.
 - [ ] S1 — 契約とfake切替（L1–L4）：session、所有者、A → B → A、重複・timeoutを依存追加なしで説明・検証。 / Contracts and fake switching: explain and verify sessions, ownership, A → B → A, duplicates and timeout without new dependencies.
 - [ ] S2 — 実モデルと正本保存（L5–L8）：依存・artifact監査、許可後のOllama、SQLite、再起動・再試行。受入は同じsessionの実モデル切替と保存応答の回復。 / Real models and storage: dependency/artifact audit, authorized Ollama and SQLite, restart/retry; accept real switching in one session and saved-response recovery.
 - [ ] S3 — 記憶と比較（L9–L12）：Python契約、Mem0、訂正／出典／隔離、部分失敗回復、export/delete、3方式。受入は外向き通信遮断下の訂正保持、隔離、削除検証。 / Memory and controls: Python contract, Mem0, corrections/provenance/isolation, partial-failure recovery, export/delete and three policies; accept correction retention, isolation and deletion checks with outbound traffic blocked.
 - [ ] S4 — React研究UI（L13–L16）：本人がUI実装、assistantが画面・API・E2Eテスト。受入は日英、keyboard、狭幅、再読込、二重送信、失敗表示、削除後cache除去。 / React UI: user implementation, assistant UI/API/E2E tests; accept JA/EN, keyboard/narrow layout, reload, duplicate submit, failures and deletion-cache removal.
 - [ ] S5 — 再現性と更新（L17–L20）：runner、stage計測、DB移行、API互換性、依存更新、rollback、開発pilot。受入は再現manifestと旧版からの復元試験。 / Reproduction/upgrades: runner, stage metrics, DB migrations, API compatibility, dependency upgrades, rollback and pilot; accept a reproduction manifest and restore test from the previous version.
 - [ ] S6 — 玄界・最終評価・報告（L21–L24）：許可済み環境調査とbounded job、評価固定、最終実行、日英報告。欠測・失敗・未達を保持。 / Genkai/evaluation/report: authorized audit and bounded job, freeze, final execution and bilingual report; retain missing data, failures and unmet targets.
-- [ ] 公開資料同期：本人が必要なwebsite実装変更を行い、assistantが文言・リンク・表示を検証。 / Public-site synchronization: the user makes required website implementation changes; the assistant verifies wording, links and presentation.
+- [x] 公開資料のsource同期（2026-11-12再割当）：assistantが日英websiteを更新し、合成例・現在の受入範囲・説明図を揃え、文言・リンク・keyboard・狭幅／広幅の表示を検証。local成果物として受入。commit・push・公開deployは未実施。 / Public-site source synchronization (reassigned 2026-11-12): the assistant updated both languages, aligned synthetic examples, accepted scope and explanatory diagrams, and verified wording, links, keyboard and narrow/wide presentation. Accepted as local artifacts; commit, push and deployment were not performed.
 - [ ] 任意U1 — 第三者UI：必要時のみ互換adapterとsession bindingを設計・検証。主評価はnative API。 / Optional U1: design/test a compatibility adapter and session binding only when needed; primary evaluation uses the native API.
 
 ## 授業の対応表 / Lesson mapping
@@ -57,6 +60,34 @@
 L1–L2は2026-11-10までに完了しました（2/24、残り22）。L1ではSession、所有者、Message検証を、L2では本人実装のversioned `CreateTurnRequest`、project固有の生成入出力、`context.Context`を受ける`ModelClient`をassistantの正常・異常・取消fixtureで検証しました。`go test ./... -count=1` と `go vet ./...` が成功しました。次はL3の認証、session API、model allowlistです。S1全体はL1–L4の受入後に完了します。
 
 L1–L2 were completed by 2026-11-10 (2/24 complete, 22 remaining). L1 verified Session, ownership and Message validation. L2 used assistant-authored valid, invalid and cancellation fixtures to verify the user-written versioned `CreateTurnRequest`, project-specific generation input/output and `ModelClient` accepting `context.Context`. `go test ./... -count=1` and `go vet ./...` passed. L3 is next: authentication, the session API and the model allowlist. S1 completes after acceptance of L1–L4.
+
+## 今回の資料・website検証 / Documentation and website verification
+
+2026-11-12、基点commit `cc7fe99fd93ab4681ed65e781da1591d0316ecdb` に対する未commitの文書・site・素材変更を確認しました。Python 3.13.12で `python scripts/check_repository.py`（35 files）、Node v24.14.0で `node --check website/assets/demo.js`、`git diff --check` が成功しました。2つの新SVGのXML・title/desc・外部参照／script不在と、日英siteのruntime素材がlocal fileのみであることを確認しました。
+
+On 2026-11-12, reviewed the uncommitted documentation/site/asset changes against base commit `cc7fe99fd93ab4681ed65e781da1591d0316ecdb`. `python scripts/check_repository.py` passed for 35 files with Python 3.13.12; `node --check website/assets/demo.js` passed with Node v24.14.0, as did `git diff --check`. Checked both new SVGs for valid XML, titles/descriptions and absence of scripts/external references, and verified that both site languages use only local runtime assets.
+
+本機previewで日英の3段階切替、締切12→15→15、単一の選択状態、Enter／Space、Tab focus、skip linkを確認しました。1280pxの広幅、390pxの狭幅、日英320pxで表示を確認し、検査した幅で横方向のoverflowはありませんでした。2図の描画とwebsiteへの画像読込を確認。研究codeは変更せず、開始時の未追跡 `auth.go`、`auth_test.go`、`models_test.go` はSHA-256一致を確認しました。
+
+Local browser review verified both languages' three stages, the 12 → 15 → 15 deadline, a single selected state, Enter/Space, Tab focus and the skip link. Reviewed wide 1280px, narrow 390px and both languages at 320px, with no horizontal overflow at the inspected widths. Verified both diagrams' rendering and site image loading. Research code was unchanged; SHA-256 hashes confirmed preservation of the initially untracked `auth.go`, `auth_test.go` and `models_test.go`.
+
+本検証は文書と静的websiteの受入であり、研究評価ではありません。Go testの再実行、React実装／E2E、実model評価、外部URLの可用性、公開deployは今回の確認対象外です。新依存・modelの導入や取得はありません。L3以降の受入状態は変更しません。
+
+This accepts documentation and a static website, not research results. Go tests were not rerun; React implementation/E2E, real-model evaluation, external URL availability and public deployment were not verified in this task. No dependencies or models were installed/downloaded. Acceptance of L3 and later lessons is unchanged.
+
+### 架構整理と公開の受入 / Architecture revision and publication acceptance
+
+2026-11-12の追加依頼で[構成](docs/architecture.md)、[契約](docs/contracts.md)、[UI](docs/ui.md)を再整理しました。Mantine選択を維持し、導入・version固定は行っていません。runtime呼出しとimport依存を分け、appが状態決定、adapterが原子保存、workerが派生storeを担当する設計です。既存Go codeの移動はせず、受入済みL1–L2を進めたとは扱いません。
+
+The additional 2026-11-12 request refined [architecture](docs/architecture.md), [contracts](docs/contracts.md) and [UI](docs/ui.md). Mantine remains selected, without installation or version pinning. The design separates runtime calls from imports: app decides state, adapters commit atomically, and the worker owns derived stores. Existing Go code was not moved and this does not advance accepted L1–L2 work.
+
+公開対象はこの整理の文書・website・SVGのみです。`cmd/bridge/auth.go`、`auth_test.go`、`models_test.go` はstage対象外とし、開始時のSHA-256と照合します。差分・local link・一般的credential pattern・JavaScript構文を確認後、履歴を置換せずmainへpushします。Pages workflowの成功と公開日英HTML・SVGを実際に確認するまで公開完了としません。
+
+Publication includes only this revision's documentation, website and SVGs. Exclude `cmd/bridge/auth.go`, `auth_test.go` and `models_test.go` from staging and compare their SHA-256 hashes against the starting snapshot. After reviewing diffs, local links, common credential patterns and JavaScript syntax, push to main without rewriting history. Do not mark publication complete until the Pages workflow succeeds and public JA/EN HTML and SVG are verified.
+
+公開後に主要link・三段階例・素材読込が壊れた場合はsiteだけの修正を優先します。復旧できない場合は公開site変更を取り消す新commitで戻し、本人の作業treeや認証codeをresetしません。DB移行・model実行・依存導入は今回の公開に含みません。
+
+If primary links, the three-stage example or assets fail after publication, prefer a focused site fix. If recovery is not possible, restore the public site with a new reverting commit, without resetting the user's worktree or authentication code. This release includes no database migration, model execution or dependency installation.
 
 ## 工数 / Effort
 
