@@ -6,9 +6,9 @@ This reference covers the public website and explanatory assets. Research UI beh
 
 ## 素材が必要な理由 / Why use visual assets
 
-本projectに必要なのは、モデル切替、正本と派生記憶、画面内の情報階層を説明する少数の図です。既存の橋形markと説明用SVGを保持し、公開websiteの背景は白に統一します。写真・人物・吉祥物・大学logoは必要ありません。背景画像・外部font・icon packageを追加せず、SVGを編集可能な原本として保持します。
+本projectに必要なのは、モデル切替、正本と派生記憶、画面内の情報階層を説明する少数の図です。既存の橋形markと説明用SVGを保持し、公開websiteには暖白のcanvasと白い重点面を使います。写真・人物・吉祥物・大学logoは必要ありません。背景画像・外部font・icon packageを追加せず、SVGを編集可能な原本として保持します。
 
-The useful assets explain model switching, authoritative messages versus derived memory, and interface hierarchy. Retain the bridge mark and explanatory SVGs while using white backgrounds throughout the public website. Photos, characters, mascots and university logos are unnecessary. Keep editable SVG sources without adding background images, remote fonts or icon packages.
+The useful assets explain model switching, authoritative messages versus derived memory, and interface hierarchy. Retain the bridge mark and explanatory SVGs while using a warm-white canvas and white focal surfaces on the public website. Photos, characters, mascots and university logos are unnecessary. Keep editable SVG sources without adding background images, remote fonts or icon packages.
 
 ## 配置と責務 / Placement and ownership
 
@@ -25,27 +25,28 @@ The user's 2026-11-12 instruction assigns the public website and artwork to the 
 
 ## 参照と適用範囲 / Reference and scope
 
-2026-11-12に[九州大学公式website](https://www.kyushu-u.ac.jp/ja/)の実際の表示とbrowserの算出styleを確認しました。調査した白いbody／header、無彩色の文字、紫紅accentを参考にします。要素ごとの値とfont指定は[資料台帳](sources.md)に記録し、大学brand guideline全体の調査結果とはしません。
+2026-11-12に[九州大学公式website](https://www.kyushu-u.ac.jp/ja/)の実際の表示とbrowserの算出styleを確認しました。白いbody／header、無彩色の文字、紫紅accentの観測は[資料台帳](sources.md)に履歴として保持します。これらは現在のproject paletteを拘束する値でも、大学brand guideline全体の調査結果でもありません。
 
-The [official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) was inspected visually and through browser-computed styles on 2026-11-12. The sampled white body/header, neutral text and burgundy accents inform this design. Element-level values and font declarations are recorded in the [source register](sources.md), not presented as a complete university brand-guideline audit.
+The [official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) was inspected visually and through browser-computed styles on 2026-11-12. Observations of its white body/header, neutral text and burgundy accents remain historical records in the [source register](sources.md). They neither prescribe the current project palette nor constitute a complete university brand-guideline audit.
 
-本projectは一般的な情報階層と確認した色値を参考にします。大学logo、写真、文章、公式brandingは転用せず、独立projectの表示を維持します。参照siteのremote fontは導入せず、日本語には端末のMeiryoを先頭とするsystem fontを使います。
+大学siteは一般的な情報階層の参考に留め、配色はproject独自に調整します。大学logo、写真、文章、公式brandingは転用せず、独立projectの表示を維持します。参照siteのremote fontは導入せず、日本語には端末のMeiryoを先頭とするsystem fontを使います。
 
-This project takes the general information hierarchy and observed colors as references. No university logos, photos, copy or official branding are reused; retain the independent-project identification. Do not import the reference site's remote fonts; use system fonts with Meiryo first for Japanese.
+Use the university site as a general hierarchy reference while developing the project's own palette. No university logos, photos, copy or official branding are reused; retain the independent-project identification. Do not import the reference site's remote fonts; use system fonts with Meiryo first for Japanese.
 
 ## 視覚言語 / Visual language
 
 | 要素 / Element | 用途 / Use |
 | --- | --- |
-| White `#ffffff` | header、本文、section、footerの背景を統一 / Consistent backgrounds for the header, body, sections and footer |
-| Burgundy `#85023e` | navigation、link、選択状態の小さなaccent。成功・失敗の判定色にしない / Small navigation, link and selection accents; not a success/failure code |
-| Black `#000000` / body `#333333` / muted `#666666` | 見出し、本文、補足を無彩色の明度で区分 / Neutral luminance levels for headings, body and supporting text |
-| Selected surface `#f5f5f5` / line `#dddddd` | 選択面と細い区切り。選択状態は文字・aria属性も併用 / Neutral selected surfaces and fine dividers; also express selection through labels and ARIA |
+| Warm white `#faf9f6` | 利用者が選択したpage canvas / User-selected page canvas |
+| White `#ffffff` | masthead、合成demo、資料領域の重点面 / Focal surfaces for the masthead, synthetic demo and resources |
+| Wine `#783b51` / hover `#5d2c3e` | navigation、link、選択状態の小さなaccent。成功・失敗の判定色にしない / Small navigation, link and selection accents; not a success/failure code |
+| Heading `#292725` / body `#3d3935` / muted `#716b64` | 見出し、本文、補足を暖灰の明度で区分 / Warm-gray luminance levels for headings, body and supporting text |
+| Selected surface `#f1ece6` / line `#e2ddd5` | 選択面と細い区切り。選択状態は文字・aria属性も併用 / Selected surfaces and fine dividers; also express selection through labels and ARIA |
 | System sans-serif | 日本語はMeiryo優先。見出しと本文に端末のfontを使い、外部fontを取得しない / Meiryo-first Japanese; system fonts for headings and body without remote font downloads |
 
-上表はprojectの採用値です。補足色、選択面、区切り線は独自の設計判断です。前版もpage背景は白でした。今回は本文と選択面を無彩色に整理し、純白canvasとlight color schemeを明示します。
+2026-11-12の最新の利用者選択は暖白canvas `#FAF9F6` です。白い重点面、暖灰の文字・区切り、低彩度の酒紅accentは、この選択に合わせたproject独自の配色です。light color schemeと既存layoutを維持し、今回の変更はpaletteに限定します。
 
-The table defines project choices; muted text, selected surfaces and dividers are independent decisions. The previous page background was already white. This revision makes text and selected surfaces neutral and explicitly defines a pure-white canvas and light color scheme.
+The latest user choice on 2026-11-12 is the warm-white canvas `#FAF9F6`. White focal surfaces, warm-gray text/dividers and muted wine accents are complementary colors developed for this project. Keep the light color scheme and existing layout; this change is limited to the palette.
 
 headerはproject名と言語切替の行、その下の白いnavigation行に分けます。heroは研究の説明と短い受入状況のasideを並べ、別のstatus帯で同じ情報を繰り返しません。本文は問い→合成例→構成→調査方法→正本文書の順で、sectionとfooterの余白を詰めます。資料は見出しの下に2列×2行の簡潔なlinkを置き、狭幅では1列にします。
 
@@ -79,9 +80,9 @@ Give explanatory images JA/EN titles/descriptions and meaningful alt text, and r
 
 The assistant authored the new SVGs on 2026-11-12 using the existing project palette. No third-party imagery, image-generation model, commercial API or font download was used. Do not infer the original mark's authorship or production history. Original project material follows the repository's [MIT license](../LICENSE); evidence classes and inspection dates are recorded in [sources.md](sources.md).
 
-同日の白基調化と続く再設計では既存SVGを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
+今回のpalette調整では既存SVGとlayoutを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
 
-The white-background simplification and subsequent redesign on the same date leave the SVG sources unchanged and add no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
+This palette refinement leaves SVG sources and layout unchanged and adds no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
 
 画像の値や語句を更新するときは関連本文と日英を同時に確認します。SVGの構文、外部参照の不在、実際の描画、代替text、local linkを確認します。画像の描画確認は、研究UIの動作検証やモデル評価の証拠にはなりません。
 

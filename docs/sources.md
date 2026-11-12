@@ -10,16 +10,16 @@ Unless noted, sources were inspected on 2026-11-08. This is upstream-source rese
 | --- | --- |
 | 確認済み要件 / Confirmed requirement | OSS、本人による実装、assistantのテスト、日英文書 / OSS, user implementation, assistant tests, bilingual docs |
 | 利用者報告 / User-reported | 教員承認、玄界account・割当 / Supervisor approval, Genkai account/allocation |
-| 確認済み設計選択 / Confirmed design choice | Mantineによる研究UI（2026-11-08） / Mantine for the research UI (2026-11-08) |
+| 確認済み設計選択 / Confirmed design choice | Mantineによる研究UI（2026-11-08）、公開siteの暖白canvas `#FAF9F6`（利用者選択、2026-11-12） / Mantine for the research UI (2026-11-08); public-site warm-white canvas `#FAF9F6` (user choice, 2026-11-12) |
 | 設計提案 / Design proposal | SQLite、module境界、性能目標 / SQLite, module boundaries and performance targets |
 | 上流資料・vendor claim / Upstream documentation or vendor claim | 対応provider、公開benchmark、製品説明 / Supported providers, published benchmarks and product descriptions |
 | 実測 / Measured result | 2026-11-08の初期scaffold：Go 1.26.0 Windowsで当時の2テスト成功。その後の受入は[PLAN.md](../PLAN.md)。モデル品質は未測定 / Initial scaffold snapshot on 2026-11-08: the two tests present then passed on Go 1.26.0 Windows. Subsequent acceptance is recorded in PLAN.md; model quality remains unmeasured |
 
 ## 公開デザイン素材 / Public design assets
 
-2026-11-12参照。既存projectの `website/assets/mark.svg` と当初の梅紫・紙色を基に、[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)をassistantが編集可能なSVGとして制作しました。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。同日のwebsite白基調化でもSVG原本は変更せず、図内の紙色とpage背景の白を区別します。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
+2026-11-12参照。既存projectの `website/assets/mark.svg` と当初の梅紫・紙色を基に、[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)をassistantが編集可能なSVGとして制作しました。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。websiteのpalette調整でもSVG原本は変更せず、図内の色とpage paletteを区別します。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
 
-Inspected 2026-11-12. The assistant authored the editable [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) using the existing `website/assets/mark.svg` and original plum/paper palette as references. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. The website's white-background simplification on the same date leaves the SVG sources unchanged, distinguishing their paper-colored artwork from white page backgrounds. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
+Inspected 2026-11-12. The assistant authored the editable [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) using the existing `website/assets/mark.svg` and original plum/paper palette as references. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. Website palette changes leave SVG sources unchanged, distinguishing artwork colors from the page palette. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
 
 これらは設計提案・合成例です。model versionは該当なしで、実modelの応答・研究UI screenshot・benchmarkとして扱いません。外部資料の従来の参照日を今回の描画確認日で上書きしません。
 
@@ -29,7 +29,7 @@ These are design proposals and synthetic examples. Model version is not applicab
 
 | 資料 / Source | 参照日・確認内容 / Inspection date and observation | 採用範囲 / Application |
 | --- | --- | --- |
-| [九州大学公式website / Official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) | 2026-11-12。実際の表示とbrowserの算出styleを確認。下表は調査した要素のsnapshot / Visual and browser-computed-style inspection on 2026-11-12; sampled observations below | 一般的な情報階層と色値の参考。大学logo・写真・文章・公式brandingは転用しない / Reference for general hierarchy and colors; no reuse of university logos, photos, copy or official branding |
+| [九州大学公式website / Official Kyushu University website](https://www.kyushu-u.ac.jp/ja/) | 2026-11-12。実際の表示とbrowserの算出styleを確認。下表は過去の参照観測として保持するsnapshot / Visual and browser-computed-style inspection on 2026-11-12; preserve the sampled values below as a historical reference snapshot | 一般的な情報階層の参考。観測色は現在のproject paletteを拘束しない。大学logo・写真・文章・公式brandingは転用しない / General hierarchy reference; observed colors do not prescribe the current project palette. No reuse of university logos, photos, copy or official branding |
 
 | 公式siteで確認した対象 / Sampled official-site element | 算出値・指定 / Computed value or declaration |
 | --- | --- |
@@ -39,13 +39,13 @@ These are design proposals and synthetic examples. Model version is not applicab
 | 危機管理button背景・ALL NEWS枠 / Crisis-management button background and ALL NEWS border | `rgb(133, 2, 62)` / `#85023e` |
 | Font指定 / Font declarations | bodyはMeiryoを含み、headerはNoto Sans JPを指定 / Body includes Meiryo; header specifies Noto Sans JP |
 
-上記は当日の要素ごとの観測で、大学brand guideline全体や各端末の実使用fontを検証した結果ではありません。本projectは背景 `#ffffff`、見出し `#000000`、本文 `#333333`、補足 `#666666`、accent `#85023e`、選択面 `#f5f5f5`、枠 `#dddddd` を採用します。補足・選択面・枠などはprojectの設計判断です。light color schemeを明示し、日本語はMeiryo優先のsystem fontを使い、remote fontは導入しません。
+上記は当日の要素ごとの観測で、大学brand guideline全体や各端末の実使用fontを検証した結果ではありません。2026-11-12の最新の利用者選択は暖白canvas `#FAF9F6` です。白い重点面、暖灰の文字・区切り、酒紅 `#783b51` のaccentはこの選択に合わせたproject独自の配色で、現在値は[視覚設計](design.md)に集約します。light color scheme、日本語のMeiryo優先system font、既存layoutとSVG原本を維持します。
 
-These are element-level observations on the inspection date, not verification of the complete university brand guidelines or the font actually used on every device. Project choices are background `#ffffff`, headings `#000000`, body `#333333`, muted text `#666666`, accents `#85023e`, selected surfaces `#f5f5f5` and borders `#dddddd`. Muted text, selected surfaces and borders are project decisions. Declare a light color scheme and use Meiryo-first system fonts for Japanese without importing remote fonts.
+These are element-level observations on the inspection date, not verification of the complete university brand guidelines or the font actually used on every device. The latest user choice on 2026-11-12 is the warm-white canvas `#FAF9F6`. White focal surfaces, warm-gray text/dividers and wine `#783b51` accents form a project-developed complementary palette; current values are maintained in [visual design](design.md). Retain the light color scheme, Meiryo-first Japanese system fonts, existing layout and SVG sources.
 
-前版もpage背景は白でした。今回は本文と選択面を無彩色に整理し、白canvasを明示します。project名・言語とnavigationを二段にし、heroの研究説明に受入状況のasideを添え、重複するstatus帯を除きます。構成図はnative `details`で必要時に開き、資料linkは広幅2列×2行・狭幅1列にします。これらは独自の設計判断で、大学による要件・公認や研究効果の証拠ではありません。新しい画像・依存・font・modelは追加しません。
+大学siteは参考であり、現在の配色を大学による要件・公認や研究効果の証拠とはしません。今回のpalette調整で新しい画像・依存・font・modelは追加しません。
 
-The previous page background was already white; this revision makes text and selected surfaces neutral and defines the white canvas explicitly. Use separate project-name/language and navigation rows, pair the hero introduction with an evidence aside, and remove the redundant status strip. Reveal the architecture diagram through native `details` and arrange resource links in a two-by-two grid on wide screens and one column on narrow screens. These are independent decisions, not university requirements, endorsement or research evidence. Add no new images, dependencies, fonts or models.
+The university site is a reference; the current palette is not a university requirement, endorsement or research evidence. This palette refinement adds no images, dependencies, fonts or models.
 
 ## Coreの調査snapshot / Core survey snapshots
 
