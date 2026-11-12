@@ -36,12 +36,13 @@ These are design proposals and synthetic examples. Model version is not applicab
 | body・header背景 / Body and header backgrounds | `rgb(255, 255, 255)` / `#ffffff` |
 | body文字 / Body text | `rgb(51, 51, 51)` / `#333333` |
 | 見出し・navigation文字 / Heading and navigation text | `rgb(0, 0, 0)` / `#000000` |
+| footer背景 / Footer background | `rgb(0, 0, 0)` / `#000000` |
 | 危機管理button背景・ALL NEWS枠 / Crisis-management button background and ALL NEWS border | `rgb(133, 2, 62)` / `#85023e` |
 | Font指定 / Font declarations | bodyはMeiryoを含み、headerはNoto Sans JPを指定 / Body includes Meiryo; header specifies Noto Sans JP |
 
-上記は当日の要素ごとの観測で、大学brand guideline全体や各端末の実使用fontを検証した結果ではありません。2026-11-12の最新の利用者選択は暖白canvas `#FAF9F6` です。白い重点面、暖灰の文字・区切り、酒紅 `#783b51` のaccentはこの選択に合わせたproject独自の配色で、現在値は[視覚設計](design.md)に集約します。light color scheme、日本語のMeiryo優先system font、既存layoutとSVG原本を維持します。
+上記は当日の要素ごとの観測で、大学brand guideline全体や各端末の実使用fontを検証した結果ではありません。利用者は2026-11-12に暖白canvas `#FAF9F6` を確認し、少量の黒の追加を依頼しました。白い重点面・暖灰本文・酒紅 `#783b51` を保ち、見出し・navigation・brand、headerの細線と全幅footerにproject独自の墨黒 `#171717` を使います。大学siteの黒と同一色の採用ではありません。現在値は[視覚設計](design.md)に集約し、light color scheme、system font、本文layoutとSVG原本を維持します。
 
-These are element-level observations on the inspection date, not verification of the complete university brand guidelines or the font actually used on every device. The latest user choice on 2026-11-12 is the warm-white canvas `#FAF9F6`. White focal surfaces, warm-gray text/dividers and wine `#783b51` accents form a project-developed complementary palette; current values are maintained in [visual design](design.md). Retain the light color scheme, Meiryo-first Japanese system fonts, existing layout and SVG sources.
+These are element-level observations on the inspection date, not verification of the complete university brand guidelines or the font actually used on every device. On 2026-11-12 the user confirmed the warm-white canvas `#FAF9F6` and requested modest black accents. Preserve white focal surfaces, warm-gray body text and wine `#783b51`, using project-selected near-black `#171717` for headings/navigation/brand, a thin header rule and the full-width footer. This does not copy the university site's exact black. Current values are maintained in [visual design](design.md); retain the light color scheme, system fonts, main-content layout and SVG sources.
 
 大学siteは参考であり、現在の配色を大学による要件・公認や研究効果の証拠とはしません。今回のpalette調整で新しい画像・依存・font・modelは追加しません。
 

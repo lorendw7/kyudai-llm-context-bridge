@@ -3,7 +3,9 @@
   color-scheme: only light;
   --accent: #783b51;
   --accent-dark: #5d2c3e;
-  --heading: #292725;
+  --heading: #171717;
+  --footer-text: #c8c2ba;
+  --footer-line: #47413d;
   --text: #3d3935;
   --muted: #716b64;
   --canvas: #faf9f6;
@@ -40,7 +42,7 @@ button { font: inherit; }
 .text-link { display: inline-block; padding-block: 6px; border-bottom: 1px solid currentColor; font-size: 14px; font-weight: 700; }
 
 /* Header and project introduction */
-.masthead { background: var(--surface); border-bottom: 3px solid var(--accent); }
+.masthead { background: var(--surface); border-top: 4px solid var(--heading); border-bottom: 3px solid var(--accent); }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 92px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--heading); font: 700 25px/1.2 Arial, sans-serif; white-space: nowrap; }
 .brand img { flex: 0 0 auto; }
@@ -121,10 +123,14 @@ button { font: inherit; }
 noscript p { margin-top: 18px; font-size: 14px; }
 
 /* Footer and accessibility */
+.site-footer { background: var(--heading); color: var(--canvas); border-top: 3px solid var(--accent); }
+.site-footer .brand { color: var(--canvas); }
+.site-footer a:hover { color: var(--surface); }
+.site-footer a:focus-visible { outline-color: var(--canvas); }
 .footer-top { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding-block: 26px; }
 .footer-top .brand { font-size: 22px; }
-.footer-top p { max-width: 550px; font-size: 12px; }
-.footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; border-top: 1px solid var(--line); padding-block: 16px; color: var(--muted); font-size: 12px; }
+.footer-top p { max-width: 550px; color: var(--footer-text); font-size: 12px; }
+.footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; border-top: 1px solid var(--footer-line); padding-block: 16px; color: var(--footer-text); font-size: 12px; }
 .footer-bottom a { text-decoration: underline; text-underline-offset: 3px; }
 .skip { position: fixed; z-index: 10; top: -100px; left: 12px; padding: 12px; background: var(--surface); color: var(--accent); }
 .skip:focus { top: 12px; }

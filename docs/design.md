@@ -40,13 +40,14 @@ Use the university site as a general hierarchy reference while developing the pr
 | Warm white `#faf9f6` | 利用者が選択したpage canvas / User-selected page canvas |
 | White `#ffffff` | masthead、合成demo、資料領域の重点面 / Focal surfaces for the masthead, synthetic demo and resources |
 | Wine `#783b51` / hover `#5d2c3e` | navigation、link、選択状態の小さなaccent。成功・失敗の判定色にしない / Small navigation, link and selection accents; not a success/failure code |
-| Heading `#292725` / body `#3d3935` / muted `#716b64` | 見出し、本文、補足を暖灰の明度で区分 / Warm-gray luminance levels for headings, body and supporting text |
+| Near-black `#171717` / body `#3d3935` / muted `#716b64` | 見出し・navigation・brandは墨黒、本文と補足は暖灰 / Near-black headings, navigation and brand; warm-gray body and supporting text |
 | Selected surface `#f1ece6` / line `#e2ddd5` | 選択面と細い区切り。選択状態は文字・aria属性も併用 / Selected surfaces and fine dividers; also express selection through labels and ARIA |
+| Footer `#171717` / text `#c8c2ba` / line `#47413d` | 全幅footer。brandとfocusは `#faf9f6`、上端に3pxの酒紅線 / Full-width footer with `#faf9f6` brand/focus and a 3px wine top border |
 | System sans-serif | 日本語はMeiryo優先。見出しと本文に端末のfontを使い、外部fontを取得しない / Meiryo-first Japanese; system fonts for headings and body without remote font downloads |
 
-2026-11-12の最新の利用者選択は暖白canvas `#FAF9F6` です。白い重点面、暖灰の文字・区切り、低彩度の酒紅accentは、この選択に合わせたproject独自の配色です。light color schemeと既存layoutを維持し、今回の変更はpaletteに限定します。
+利用者は2026-11-12に暖白canvas `#FAF9F6` の配色を確認し、少量の黒を加える方針を選びました。暖白・白い重点面・暖灰本文・酒紅accentを維持し、墨黒の見出し、header上端の4px線、暗色footerで輪郭を整えます。light color schemeと本文layoutを維持するproject独自の調整です。
 
-The latest user choice on 2026-11-12 is the warm-white canvas `#FAF9F6`. White focal surfaces, warm-gray text/dividers and muted wine accents are complementary colors developed for this project. Keep the light color scheme and existing layout; this change is limited to the palette.
+On 2026-11-12 the user confirmed the warm-white `#FAF9F6` palette and requested modest black accents. Preserve the warm canvas, white focal surfaces, warm-gray body text and wine accents; add definition through near-black headings, a 4px header top rule and a dark footer. This project-developed refinement retains the light color scheme and main-content layout.
 
 headerはproject名と言語切替の行、その下の白いnavigation行に分けます。heroは研究の説明と短い受入状況のasideを並べ、別のstatus帯で同じ情報を繰り返しません。本文は問い→合成例→構成→調査方法→正本文書の順で、sectionとfooterの余白を詰めます。資料は見出しの下に2列×2行の簡潔なlinkを置き、狭幅では1列にします。
 
@@ -80,9 +81,9 @@ Give explanatory images JA/EN titles/descriptions and meaningful alt text, and r
 
 The assistant authored the new SVGs on 2026-11-12 using the existing project palette. No third-party imagery, image-generation model, commercial API or font download was used. Do not infer the original mark's authorship or production history. Original project material follows the repository's [MIT license](../LICENSE); evidence classes and inspection dates are recorded in [sources.md](sources.md).
 
-今回のpalette調整では既存SVGとlayoutを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
+今回の配色・黒の補助色調整では既存SVGと本文layoutを変更せず、新しい画像・依存・font・modelを追加しません。公開siteの表示変更と検証結果はPLAN.mdに記録し、設計方針を実測結果や公開完了の証拠とはしません。
 
-This palette refinement leaves SVG sources and layout unchanged and adds no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
+This palette and black-accent refinement leaves SVG sources and main-content layout unchanged and adds no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
 
 画像の値や語句を更新するときは関連本文と日英を同時に確認します。SVGの構文、外部参照の不在、実際の描画、代替text、local linkを確認します。画像の描画確認は、研究UIの動作検証やモデル評価の証拠にはなりません。
 
