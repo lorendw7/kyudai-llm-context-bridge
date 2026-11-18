@@ -20,9 +20,11 @@ The user writes research implementation code: Go, Python, the React research UI 
 
 ## 読む順序 / Reading order
 
+学習を続ける場合は[次の演習 · L4](PLAN.md#l4-entry)から始めます。 / To continue learning, start with the [next L4 exercise](PLAN.md#l4-entry).
+
 | 文書 / Document | 内容 / Purpose |
 | --- | --- |
-| [PLAN.md](PLAN.md) | 唯一の作業一覧・授業順・受入基準 / Sole action checklist, lesson sequence and acceptance gates |
+| [PLAN.md](PLAN.md) | 唯一の作業一覧・段階課題・受入基準 / Sole action checklist, stage projects and acceptance gates |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 一回の授業、分担、検証 / Lesson method, ownership and validation |
 | [docs/architecture.md](docs/architecture.md) | 技術選定、モジュール境界、保存と更新 / Technology choices, module boundaries, persistence and upgrades |
 | [docs/contracts.md](docs/contracts.md) | データ、API、失敗と再試行 / Data, API, failures and retries |

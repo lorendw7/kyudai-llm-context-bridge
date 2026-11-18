@@ -22,21 +22,21 @@ Mantineだけを導入対象とし、他候補は同時導入しません。Mant
 
 Only Mantine is in installation scope; do not install the alternatives alongside it. Mantine core is verified as MIT; actual packages, icons, test dependencies and transitive dependencies remain unaudited. Components can use the default theme, but a library alone does not guarantee accessibility. See the [source register](sources.md).
 
-## 3つの画面 / Three views
+## 最初はChat一画面 / Start with one Chat view
 
-| 画面 / View | 操作と表示 / Interaction and display | Mantine候補 / Candidate components |
+| Chat内の領域 / Area within Chat | 操作と表示 / Interaction and display | Mantine候補 / Candidate components |
 | --- | --- | --- |
-| Chat / 会話 | appが選択したsessionの会話、modelはturnごとに選択、送信、取消、状態、再読込 / Conversation for the app-selected session, model per turn, send/cancel/status/reload | AppShell, NavLink, Select, ScrollArea, Paper, Textarea, Button, Badge, Alert |
-| Memory / 記憶 | 記憶text、source message、revision、訂正の参照、取得済み記録の絞込 / Memory text, source messages, revisions, correction references and filtering loaded records | Table, Accordion, TextInput, Drawer |
-| Results / 結果 | 既存runのpolicy、model、品質、token、時間、失敗・欠測 / Existing runs: policy, model, quality, tokens, time, failures/missing data | Table, Select, Badge, Alert |
+| 会話と入力 / Conversation and composer | 選択sessionの会話、次turnのmodel、送信、取消、状態、再読込 / Selected session's conversation, next-turn model, send, cancel, status and reload | AppShell, Select, ScrollArea, Paper, Textarea, Button, Badge, Alert |
+| 派生記憶と出典 / Derived memory and sources | 選択sessionの記憶text、revision、訂正とsource messageへの参照を必要時に表示 / On-demand memory text, revisions, corrections and source-message links for the selected session | Drawer, Accordion |
+| Session操作 / Session controls | 作成・選択・export・削除の状態確認 / Create, select, export and check deletion status | Select, Button, Modal, Alert |
 
-最初のUIはChatとMemoryを実装し、Resultsはrunnerのmetrics schemaが固定してから追加します。実験開始buttonは初期版に含めません。UI操作で大量推論や遠隔jobを暗黙起動させないためです。図表は必要になってからOSSのchart libraryを個別監査します。
+S4では一つのChatで切替・状態・出典・削除までを確認します。評価結果は最初はrunnerのJSONL/CSVから読みます。独立したMemory／Results画面、記録の絞込、chart、実験開始操作は、観測や実験に具体的な必要が出た時点で検討します。[学習ルート](../PLAN.md#teaching-route)を参照します。
 
-Implement Chat and Memory first; add Results after the runner's metrics schema is fixed. The initial UI has no experiment-launch button, preventing accidental bulk inference or remote jobs. Audit an OSS chart library separately only when plots are needed.
+S4 uses one Chat view to verify switching, state, sources and deletion. Read evaluation results from the runner's JSONL/CSV initially. Consider separate Memory or Results views, record filters, charts and experiment controls when a concrete observation or experiment requires them. See the [learning route](../PLAN.md#teaching-route).
 
-sessionの作成・選択・export/deleteはappの共通session操作として扱います。Memory内から操作を示す場合もappへ要求し、session全体への影響を説明します。「絞込」は取得済みの記録を対象とし、workerの意味検索や未定義の検索APIとは区別します。
+sessionの作成・選択・export/deleteはappの共通操作です。削除確認では選択session全体への影響を示します。
 
-Session creation, selection and export/delete belong to shared session operations in app. If Memory exposes an entry point, it delegates the request to app and explains the session-wide scope. Filtering applies to loaded records; it is distinct from worker semantic retrieval or an undefined search API.
+App owns session creation, selection, export and deletion. The delete confirmation explains that it applies to the entire selected session.
 
 ## 情報の優先順位と配置 / Information hierarchy and layout
 
@@ -69,14 +69,11 @@ These are proposals to use Mantine components such as AppShell, Stack, Group and
 
 ```text
 web/src/
-  app/                 組立・認証・session・日英navigation / composition, auth, session, JA/EN navigation
-  features/chat/       会話・入力・turn表示 / transcript, composer, turn presentation
-  features/memory/     派生記憶・出典・絞込 / derived memories, sources, filtering
-  features/results/    結果閲覧 / read-only runs and metrics
+  app/                 組立・認証・sessionとMantine provider / composition, auth, session and Mantine provider
+  features/chat/       会話・入力・turn表示・派生記憶の出典 / transcript, composer, turn state and derived-memory sources
   lib/api/             HTTP通信・契約読込・エラー変換 / HTTP client, contract decoding, errors
   lib/contracts/       版付きDTO・状態・境界検証 / versioned DTOs, states, boundary validation
   locales/             日英文字列 / ja/en strings
-  theme/               Mantine設定 / Mantine provider configuration
   test/                assistant担当のfixtureとtest設定 / assistant-owned fixtures/setup
 ```
 
@@ -95,9 +92,9 @@ HTTP応答は境界で検証してからfeatureへ渡します。型assertionだ
 
 Validate HTTP responses at the boundary before passing them to a feature. A type assertion is insufficient; an incompatible schema or unknown turn state disables dependent actions with an explanation. The presentation layer translates error codes through locales while the API client preserves the codes. The browser never connects directly to Ollama, Mem0 or Qdrant.
 
-認証・選択sessionの変更時と削除開始時にappが要求世代を進め、featureは開始時の世代とsessionを記録します。応答の適用前にそれらとserver revisionを検証し、古い要求や削除済みsessionの応答を破棄します。Memoryから原messageを開く場合はIDをcallbackでappへ渡し、appがChatへ移動します。削除確定時はappが会話・記憶・選択中の出典・draftをまとめて除去します。
+認証・選択sessionの変更時と削除開始時にappが要求世代を進め、featureは開始時の世代とsessionを記録します。応答の適用前にそれらとserver revisionを検証し、古い要求や削除済みsessionの応答を破棄します。記憶内の出典を選ぶと、同じChat内の原messageへ移動します。削除確定時はappが会話・記憶・選択中の出典・draftをまとめて除去します。
 
-App advances the request epoch when authentication or the selected session changes and when deletion starts; features capture the epoch and session when starting requests. Before applying responses, validate that context and the server revision, discarding obsolete requests and responses for deleted sessions. Memory opens a source message by passing IDs through a callback to app, which navigates to Chat. Confirmed deletion makes app clear the conversation, memory, selected source and draft together.
+App advances the request epoch when authentication or the selected session changes and when deletion starts. Features capture the epoch and session when starting requests. Before applying a response, validate that context and the server revision, discarding obsolete requests and responses for deleted sessions. Selecting a memory source moves to the original message within the same Chat view. On confirmed deletion, app clears the conversation, memory, selected source and draft together.
 
 browserの要求世代、serverの削除世代、原文版、記憶版は同じ値ではありません。[revisionの契約](contracts.md)に従い、応答のscope・世代と対象snapshotを照合します。古いsource messageも訂正の履歴として有効な参照になり得るため、古い版であることだけで出典を無効にしません。
 

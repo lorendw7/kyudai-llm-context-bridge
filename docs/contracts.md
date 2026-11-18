@@ -105,6 +105,8 @@ UIからの `user_id`, `lab_id`, `system`, 過去assistant messageを正本と�
 
 Do not accept UI-supplied user_id/lab_id, system instructions or past assistant messages as authoritative records. Explicitly reject excessive input, unknown models, invalid roles and unknown critical fields. Public and worker schemas have separate versions.
 
+<a id="turn-states"></a>
+
 ## 重複、状態、失敗 / Duplicates, states and failures
 
 同じsessionとrequest IDで同じpayloadを再送した場合、既存turnを返します。内容が違えば409 conflictです。別request IDでも処理中turnがあれば409 busyを返し、暗黙queueは作りません。重複判定にmodel IDと生成設定も含めます。

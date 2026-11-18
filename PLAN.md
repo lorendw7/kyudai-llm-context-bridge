@@ -4,9 +4,9 @@
 
 ## 現在の受入 / Current acceptance (2026-11-13)
 
-L3完了：L1–L3の3/24授業を受入、残り21。S1はL4（turn状態とfake A → B → A）の受入まで未完了です。以下の2026-11-12部分受入記録は履歴として保持します。
+L1–L3は受入済みです。次はS1のL4で、[状態値と状態遷移を見分ける演習](#l4-entry)から始めます。S1の受入には同一sessionでのfake A → B → Aと失敗時の検証が必要です。現在の学習順は[学習ルート](#teaching-route)を参照します。
 
-L3 is complete: L1–L3 accepted, 3/24 lessons complete and 21 remaining. S1 awaits L4 (turn state and fake A → B → A). The partial acceptance entries dated 2026-11-12 below remain historical records.
+L1–L3 are accepted. Continue in S1 at L4 with [an exercise on state values and transitions](#l4-entry). S1 acceptance requires fake A → B → A in one session and verification of failure behavior. See the [learning route](#teaching-route) for the current sequence.
 
 本人のmainは認証・model環境設定を検証してから共有MemorySessionStoreとnewAPIHandlerを構築し、127.0.0.1:8080でlistenします。基点73188b4と今回の作業tree、Windows Go 1.26.0、GOTOOLCHAIN=local／GOPROXY=offで `go test ./... -count=1 -timeout=30s`、`go vet ./...`、`go test -race ./... -count=1 -timeout=60s` が成功しました。
 
@@ -44,44 +44,54 @@ Acceptance covers in-memory session metadata and configured model IDs. Persisten
 - [x] S0設計追補（2026-11-12明示依頼）— modular monolithの依存規則、state/store所有者、段階的package分割、UI境界と変更時の検証を日英で整理。状態名・revision意味・session全体のexport/deleteを整合。研究機能codeの再配置・実装は未実施。 / S0 architecture follow-up (explicitly requested 2026-11-12): documented modular-monolith dependency rules, state/store ownership, incremental package extraction, UI boundaries and change-focused validation in JA/EN. Aligned state names, revision semantics and session-wide export/delete. Research functional code was not relocated or implemented.
 - [x] main公開（2026-11-12明示依頼）— 文書・website・素材の14ファイルをcommit `eee6aca` でpush。対応するPages deploy成功と公開日英ページ・素材・三段階例を確認。作業中の認証3ファイルと研究機能codeを除外。証拠は下記。 / Main publication (explicitly requested 2026-11-12): pushed the 14 documentation/site/asset files in commit `eee6aca`; verified the matching successful Pages deployment, public JA/EN pages, assets and three-stage example. Excluded the three authentication work-in-progress files and research functional code. Evidence below.
 - [ ] S1 — 契約とfake切替（L1–L4）：session、所有者、A → B → A、重複・timeoutを依存追加なしで説明・検証。 / Contracts and fake switching: explain and verify sessions, ownership, A → B → A, duplicates and timeout without new dependencies.
-- [ ] S2 — 実モデルと正本保存（L5–L8）：依存・artifact監査、許可後のOllama、SQLite、再起動・再試行。受入は同じsessionの実モデル切替と保存応答の回復。 / Real models and storage: dependency/artifact audit, authorized Ollama and SQLite, restart/retry; accept real switching in one session and saved-response recovery.
-- [ ] S3 — 記憶と比較（L9–L12）：Python契約、Mem0、訂正／出典／隔離、部分失敗回復、export/delete、3方式。受入は外向き通信遮断下の訂正保持、隔離、削除検証。 / Memory and controls: Python contract, Mem0, corrections/provenance/isolation, partial-failure recovery, export/delete and three policies; accept correction retention, isolation and deletion checks with outbound traffic blocked.
-- [ ] S4 — React研究UI（L13–L16）：本人がUI実装、assistantが画面・API・E2Eテスト。受入は日英、keyboard、狭幅、再読込、二重送信、失敗表示、削除後cache除去。 / React UI: user implementation, assistant UI/API/E2E tests; accept JA/EN, keyboard/narrow layout, reload, duplicate submit, failures and deletion-cache removal.
-- [ ] S5 — 再現性と更新（L17–L20）：runner、stage計測、DB移行、API互換性、依存更新、rollback、開発pilot。受入は再現manifestと旧版からの復元試験。 / Reproduction/upgrades: runner, stage metrics, DB migrations, API compatibility, dependency upgrades, rollback and pilot; accept a reproduction manifest and restore test from the previous version.
-- [ ] S6 — 玄界・最終評価・報告（L21–L24）：許可済み環境調査とbounded job、評価固定、最終実行、日英報告。欠測・失敗・未達を保持。 / Genkai/evaluation/report: authorized audit and bounded job, freeze, final execution and bilingual report; retain missing data, failures and unmet targets.
+- [ ] S2 — 実モデルと正本保存：依存・artifact監査、許可後のOllama、SQLite、再起動・再試行。受入は同じsessionの実モデル切替と保存応答の回復。 / Real models and storage: dependency/artifact audit, authorized Ollama and SQLite, restart/retry; accept real switching in one session and saved-response recovery.
+- [ ] S3 — 記憶と比較：Python契約、Mem0、訂正／出典／隔離、部分失敗回復、export/delete、3方式。受入は外向き通信遮断下の訂正保持、隔離、削除検証。 / Memory and controls: Python contract, Mem0, corrections/provenance/isolation, partial-failure recovery, export/delete and three policies; accept correction retention, isolation and deletion checks with outbound traffic blocked.
+- [ ] S4 — React研究UI：本人がMantineで単一Chat画面と出典・session操作を実装。assistantが日英、keyboard、IME、狭幅、再読込、二重送信、失敗表示、削除後cache除去を検証。 / Research UI: the user implements one Mantine Chat view with sources and session controls. The assistant verifies JA/EN, keyboard, IME, narrow layouts, reload, duplicate submit, failures and deletion-cache removal.
+- [ ] S5 — 再現性と更新：最小runnerで既存APIを再生し、stage計測とJSONL/CSVを出力。実際の変更に合わせて移行・互換性・rollbackを検証し、開発pilotを行う。受入は再現manifestと旧版からの復元試験。 / Reproduction and upgrades: replay the existing API with a minimal runner and write stage measurements to JSONL/CSV. Verify migration, compatibility and rollback for actual changes, and run a development pilot. Acceptance requires a reproduction manifest and restore test from the previous version.
+- [ ] S6 — 玄界・最終評価・報告：許可済み環境調査とbounded job、評価固定、最終実行、日英報告。欠測・失敗・未達を保持。 / Genkai, evaluation and reporting: authorized audit and bounded job, freeze, final execution and bilingual report. Retain missing data, failures and unmet targets.
 - [x] 公開資料のsource同期（2026-11-12再割当）：assistantが日英websiteを更新し、合成例・現在の受入範囲・説明図を揃え、文言・リンク・keyboard・狭幅／広幅の表示を検証。最初にlocal成果物を受入し、その後の明示依頼で上記main公開を実施。 / Public-site source synchronization (reassigned 2026-11-12): the assistant updated both languages, aligned synthetic examples, accepted scope and explanatory diagrams, and verified wording, links, keyboard and narrow/wide presentation. Accepted locally first, then published to main following the explicit request above.
 - [ ] 任意U1 — 第三者UI：必要時のみ互換adapterとsession bindingを設計・検証。主評価はnative API。 / Optional U1: design/test a compatibility adapter and session binding only when needed; primary evaluation uses the native API.
 
-## 授業の対応表 / Lesson mapping
+<a id="teaching-route"></a>
 
-各回は説明→一つの課題→テスト→レビューです。表はS1–S6との対応であり、別の進捗一覧ではありません。次段階は前段階の受入後に説明します。 / Each lesson is explanation → one exercise → tests → review. The table maps to S1–S6; it is not another progress tracker. Explain the next stage after acceptance of the current one.
+## 学習ルート / Learning route
 
-| 回 / Lesson | 学習・本人の成果物 / Learning and user deliverable | assistantの受入証拠 / Assistant acceptance evidence |
-| --- | --- | --- |
-| L1 / S1 | Message検証、Sessionと所有者 / Message validation, Session and ownership | role、空値、session分離の合成例 / Role, empty values and session-isolation examples |
-| L2 / S1 | interface、API DTO、依存方向 / Interfaces, API DTOs and dependency direction | 正常・異常契約fixture / Valid and invalid contract fixtures |
-| L3 / S1 | 認証、session API、model allowlist / Authentication, session API and model allowlist | 偽identity、他user/lab拒否 / Reject forged identity and other users/labs |
-| L4 / S1 | turn状態、fake A → B → A / Turn state and fake A → B → A | timeout、取消、同時・重複要求 / Timeout, cancellation, concurrent/duplicate requests |
-| L5 / S2 | artifact台帳、設定schema / Artifact manifest and config schema | version、license、hash、秘密分離 / Version, license, hash and secret separation |
-| L6 / S2 | Ollama adapter、予算・usage / Ollama adapter, budget and usage | 許可済み実応答、エラー、token検証 / Authorized response, errors and token validation |
-| L7 / S2 | SQLite repositoryとmigration / SQLite repository and migration | 制約、transaction、restart / Constraints, transaction and restart |
-| L8 / S2 | 重複・不確定失敗の回復 / Duplicate/uncertain-failure recovery | 保存回答再返却、無条件再生成なし / Saved-answer replay; no blind regeneration |
-| L9 / S3 | Python workerとversioned契約 / Python worker and versioned contract | fake worker契約、認証・scope / Fake-worker contract, auth and scope |
-| L10 / S3 | local Mem0設定と出典 / Local Mem0 config and provenance | 訂正A → B → A、外向き通信遮断 / Correction across A → B → A; outbound traffic blocked |
-| L11 / S3 | memory回復、export/delete、revision / Memory recovery, export/delete and revisions | 遅延write、履歴・vector・checkpoint削除 / Late writes and history/vector/checkpoint deletion |
-| L12 / S3 | full-history、summary、Mem0 policy / Full-history, summary and Mem0 policies | 同じ入力・予算、明示overflow / Matched input/budget, explicit overflow |
-| L13 / S4 | React/TS、Vite、Mantine、日英辞書 / React/TS, Vite, Mantine and JA/EN dictionaries | fixture画面、library styles、型確認 / Fixture views, library styles and type checks |
-| L14 / S4 | API clientとchat画面 / API client and chat view | 切替、IME、二重送信・再読込 / Switching, IME, duplicate submit and reload |
-| L15 / S4 | memory/source閲覧と削除 / Memory/source inspection and deletion | 所有者、訂正、注入文字列、cache / Ownership, corrections, injection text and cache |
-| L16 / S4 | UI状態と実API連携 / UI states and real API integration | keyboard、狭幅、部分失敗、E2E / Keyboard, narrow layout, partial failure and E2E |
-| L17 / S5 | runnerとcase/config schema / Runner and case/config schema | dataset分離、決定的fake再生 / Dataset separation and deterministic fake replay |
-| L18 / S5 | stage metricsと結果表示 / Stage metrics and result display | 計算fixture、欠測、load分離 / Accounting fixtures, missing data and load separation |
-| L19 / S5 | API/DB/worker/UI更新手順 / API/DB/worker/UI upgrades | migration、互換性、backup復元 / Migration, compatibility and backup restore |
-| L20 / S5 | 開発pilotと再現package / Development pilot and reproduction package | 失敗、実費、hash、起動停止 / Failures, measured cost, hashes and lifecycle |
-| L21 / S6 | 玄界環境・job packaging / Genkai environment and job packaging | 許可済みaudit、bounded smoke、後処理 / Authorized audit, bounded smoke and cleanup |
-| L22 / S6 | 評価仕様と独立case固定 / Freeze evaluation protocol and independent cases | rubric、seed、manifest凍結 / Rubric, seed and manifest freeze |
-| L23 / S6 | 固定条件で最終実行 / Final execution under frozen conditions | 324 runs案、欠測・隔離suite / Proposed 324 runs, missing data and isolation suite |
-| L24 / S6 | 日英報告・再現ガイド / Bilingual report/reproduction guide | 主張と証拠の対応、未達記載 / Claims mapped to evidence, unmet targets reported |
+L1–L3の受入とL4の番号を引き継ぎます。従来L5–L24で扱った知識はS2–S6の5つの段階課題にまとめます。[締切を12日から15日に訂正する合成会話](website/index.html#handoff)をS1–S5で利用し、各段階で変わる境界と観測結果に集中します。最終評価には独立したcaseを使用します。
+
+Keep L1–L3 acceptance and the L4 identifier. Combine the topics formerly taught in L5–L24 into five stage projects, S2–S6. Reuse [one synthetic A → B → A conversation](website/index.html#handoff) across S1–S5, correcting a deadline from the 12th to the 15th. Focus on the boundary and observations that change at each stage. Final evaluation uses independent cases.
+
+各回は対象のsourceまたはfixtureを一緒に読み、先に結果と理由を予測し、観測との差を説明します。本人はその段階を通す最小の機能を書くか、既存の仕組みで足りる場合は観測結果をレビューします。知識の確認は条件を一つ変えた例を説明できること、実装の受入は下表の証拠です。授業方法は[学習ガイド](CONTRIBUTING.md#lesson-method)を参照します。
+
+In each session, read the relevant source or fixture, predict what will happen and why, then explain any difference from the observation. The user writes the smallest functional change that completes the stage or reviews the evidence when existing behavior suffices. Explain a fresh variation to demonstrate understanding. The table gives implementation acceptance evidence. See the [learning guide](CONTRIBUTING.md#lesson-method) for the lesson method.
+
+| 段階 / Stage | 学ぶこと / Concepts | 本人の最小成果物 / Minimum user deliverable | 受入の証拠 / Acceptance evidence |
+| --- | --- | --- | --- |
+| S1 · L4 | Goの値検証と状態遷移、`context.Context`、並行実行、冪等性、HTTP認可 / Go value validation and transitions, context, concurrency, idempotency and HTTP authorization | 現在の`cmd/bridge`で全履歴turnを既存認証・`ModelClient`に接続 / Wire full-history turns to existing authentication and ModelClient in the current cmd/bridge | 同一sessionのfake A → B → A、履歴の順序、重複・競合、期限・明示取消・切断・遅延結果、他所有者の拒否 / Fake A → B → A in one session, history order, replay/conflict, deadline, explicit cancellation, disconnect, late results and denial across owners |
+| S2 | adapter、model artifactと設定、token予算とusage、SQL制約、transaction、migrationと再起動回復 / Adapters, model artifacts/configuration, token budget and usage, SQL constraints, transactions, migrations and restart recovery | 許可後のOllama adapter一つと、同じturn契約を保存するSQLite repository。採用artifactと設定を既存台帳・設定に記録 / One authorized Ollama adapter and a SQLite repository for the same turn contract. Record selected artifacts and configuration with the existing register and settings | 許可済みmodelで切替、usageと予算超過を確認。再起動後に保存回答を同じIDで取得し、再送で生成を重ねない / Switch with authorized models, verify usage and budget overflow, then retrieve the saved reply by ID after restart and verify replay does not generate again |
+| S3 | versionedなservice契約、派生記憶、訂正・出典・revision、隔離、部分失敗、全履歴・逐次要約・Mem0の公平な比較 / Versioned service contracts, derived memory, corrections/provenance/revisions, isolation, partial failure and fair comparison of full history, rolling summary and Mem0 | 一つのPython worker、既存の全履歴と比較する要約・Mem0、出典付きsession exportとsession全体の削除 / One Python worker, summary and Mem0 alongside existing full history, export with provenance and session-wide deletion | 同じcase・予算で3方式とoverflowを確認。外向き通信遮断下の訂正・隔離・削除、回答保存後の回復、削除後の遅延write拒否を確認 / Check all three policies and overflow with the same case and budget. Verify corrections, isolation and deletion with outbound traffic blocked, recovery after answer save, and rejection of late writes after deletion |
+| S4 | React/TypeScript、Mantine、API境界、画面状態とserver状態、日英、accessibility / React/TypeScript, Mantine, API boundaries, browser and server state, JA/EN and accessibility | Chat一画面に入力・状態・model切替・出典・session操作をまとめる / One Chat view with a composer, status, model selection, sources and session actions | 同じ会話で切替、再認証後の再読込、二重送信、失敗・取消、削除後cache除去を確認。日英・IME・keyboard・狭幅も確認 / Verify switching, reload after reauthentication, duplicate submit, failure/cancellation and cache removal after deletion, plus JA/EN, IME, keyboard and narrow layouts |
+| S5 | 再生とcheckpoint、tokenと時間の内訳、欠測、API互換性、backup・復元、pilot設計 / Replay and checkpoints, token/time accounting, missing data, API compatibility, backup/restore and pilot design | native APIを呼ぶ最小runnerでmanifest・JSONL/CSVを出す。旧版からの復元を一度実演 / Minimal runner calling the native API, writing a manifest and JSONL/CSV, plus a restore drill from the previous version | fakeで再生・集計の一致、旧版からの復元、pilotで失敗・欠測と実行条件の記録 / Match replay and aggregation with fakes, restore from the previous version and record pilot failures, missing data and run conditions |
+| S6 | Genkaiでの資源管理、独立case、rubricと条件の固定、比較・限界・再現性 / Genkai resource management, independent cases, frozen rubric/conditions, comparisons, limitations and reproducibility | 許可済み環境で既存runnerを使い、固定条件の実行記録と日英報告を作る / Use the existing runner in the authorized environment, then produce frozen-run records and a bilingual report | manifestとcase/rubric hashで追跡でき、欠測・失敗・未達を再現手順とともに報告 / Trace results to the manifest and case/rubric hashes, with missing data, failures and unmet targets reported alongside reproduction steps |
+
+新しい抽象化は、外部adapterや二つ目の実装など、実際に分ける境界ができた時点で導入します。汎用設定loader、独自queue、複数の研究UI画面、結果dashboardは教材用に先行開発せず、必要になった時に判断します。実装の要否と知識の習得は、たとえば旧版復元・再試行・欠測集計を一つの実例で説明し検証することで分けて扱います。
+
+Introduce abstractions when a real boundary appears, such as an external adapter or a second implementation. Consider a generic config loader, custom queue, additional research views or a results dashboard only when a concrete need arises. Learn upgrades, retry behavior and missing-data accounting through one worked example each, using existing mechanisms wherever possible.
+
+<a id="l4-entry"></a>
+
+### 次の演習 · L4 / Next exercise · L4
+
+まず[既存のMessage検証](cmd/bridge/domain.go)と[turn状態の契約](docs/contracts.md#turn-states)を読みます。`memory_pending`と`" generating "`が正本値かを判定し、全履歴turnで`accepted → answer_saved`へ直接進めるかを説明します。
+
+Start with the [existing Message validation](cmd/bridge/domain.go) and [turn-state contract](docs/contracts.md#turn-states). Decide whether `memory_pending` and `" generating "` are canonical values, then explain whether full history permits a direct `accepted → answer_saved` transition.
+
+最初に本人が`cmd/bridge/turn.go`に書くのは`TurnState`と8つの正本値の完全一致検証（`Validate() error`）です。assistantは空値、別名、大小文字違い、余分な空白を含むtable testを用意します。その後、正常経路・失敗・取消の遷移、原子的な受理と保存、fakeでの履歴組立、HTTP受理・照会・取消の順に同じturnをつなぎます。派生記憶と再起動回復はそれぞれの段階で受け入れます。
+
+The first code the user writes in `cmd/bridge/turn.go` is `TurnState` with exact validation of all eight canonical values (`Validate() error`). The assistant provides table-driven tests for empty values, aliases, case changes and padding. Then extend that same turn through success, failure and cancellation transitions, atomic admission and save, history assembly with fakes, and HTTP submission, lookup and cancellation. Derived memory and restart recovery have their own acceptance stages.
+
+### 過去の受入記録 / Historical acceptance records
+
+以下の「次」と授業数は各記録当時のものです。現在の進捗は冒頭の受入と[学習ルート](#teaching-route)を参照します。 / References to “next” and lesson counts below reflect their original dates. Use the opening acceptance section and [learning route](#teaching-route) for current progress.
 
 L1–L2は2026-11-10までに完了しました（2/24、残り22）。L1ではSession、所有者、Message検証を、L2では本人実装のversioned `CreateTurnRequest`、project固有の生成入出力、`context.Context`を受ける`ModelClient`をassistantの正常・異常・取消fixtureで検証しました。`go test ./... -count=1` と `go vet ./...` が成功しました。次はL3の認証、session API、model allowlistです。S1全体はL1–L4の受入後に完了します。
 
@@ -235,20 +245,9 @@ Publication verified (2026-11-12): pushed [commit 059573b](https://github.com/lo
 
 ## 工数 / Effort
 
-週20時間で学びながら本人実装する場合の推定です。通常の授業は3–6時間、重い連携課題は分割します。S4はS3受入後に進めます。 / Estimates assume user implementation while learning, 20 hours/week. Lessons usually take 3–6 hours; heavier integration work may be split. S4 follows S3 acceptance.
+旧24授業の工数見積りは更新待ちです。新ルートでは各段階で読解・説明、本人の実装・修正、環境準備・待ち時間を分けて記録します。L4とS2の最初のadapterで実測し、残りの見通しを更新します。
 
-| 段階 / Stage | 追加工数 / Incremental effort | 成果物 / Deliverable |
-| --- | --- | --- |
-| S1 | 12–20 h | 依存不要の切替契約 / Dependency-free switching contract |
-| S2 | 16–28 h | 実モデル＋保存 / Real models and storage |
-| S3 | 20–32 h | 記憶・隔離・削除・3方式 / Memory, isolation, deletion and policies |
-| S4 | 16–28 h | React研究UI / React research UI |
-| S5 | 16–28 h | 再現・更新可能な原型 / Reproducible, upgradeable prototype |
-| S6 | 24–48 h | 最終評価と日英報告 / Final evaluation and bilingual report |
-
-累積：実モデルAPI demo 28–48h、記憶原型48–80h、UI付き64–108h、報告まで104–184h（約6–10週間）。学習、互換性、許可、queue待ちで変動します。2授業・1週間の実績で見直し、納期保証にはしません。
-
-Cumulative: real-model API demo 28–48h, memory prototype 48–80h, UI included 64–108h, report completed 104–184h (about 6–10 weeks). Learning, compatibility, authorization and queue waits affect duration. Re-estimate after two lessons/one week; these are not delivery guarantees.
+The old 24-lesson estimate is due for revision. For each stage, track time spent reading and explaining, implementing and fixing, and setting up or waiting for the environment. Use actual time from L4 and the first S2 adapter to re-estimate the remaining work.
 
 ## 評価・実行ゲート / Evaluation and execution gates
 

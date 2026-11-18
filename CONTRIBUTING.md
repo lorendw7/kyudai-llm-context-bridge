@@ -14,19 +14,25 @@ The user writes research implementation code: backend, worker, React, component-
 
 Exception dated 2026-11-12: the user reassigned public `website/` and visual assets to the assistant, including HTML, CSS, JavaScript, explanatory graphics and display verification. Research UI `web/` remains user-written with Mantine and no handwritten CSS.
 
-## 一回の授業 / One lesson
+<a id="lesson-method"></a>
 
-一つの小さい成果物を扱います。目的とdata flowを説明し、入出力、失敗、完了条件を先に定義します。本人が説明を言い直せることを確認して実装し、assistantの契約testと観測結果でreviewします。完成実装の配布ではなく、hintと設計理由を使います。
+## 授業の進め方 / Lesson method
 
-Work on one small deliverable. Explain purpose/data flow and define input, output, failure and completion conditions first. The user should restate the design, implement it and review it against assistant-authored contract tests and observations. Teach with hints and design reasons rather than complete implementations.
+各回は一つの問いから始めます。関連するsourceまたは合成fixtureを読み、本人が実行前に結果と理由を予測します。assistantは一度に一つのhintと設計理由を伝えます。確認後に条件を一つ変え、本人が同じ原則で説明できるかを確かめます。
 
-毎回の記録は「対象S/L、変更契約、本人実装、実行testと結果、残る疑問」です。完了記号や次の作業はPLAN.mdだけに記録します。契約が変わった場合は本人と期待動作を明確にしてからtestを変更し、単に現実装に合わせてtestを弱めません。
+Start each session with one question. Read the relevant source or synthetic fixture, and have the user predict the result and explain why before running it. The assistant gives one hint at a time and explains the design reason. Then change one condition and ask the user to explain it using the same principle.
 
-Each lesson records the S/L stage, changed contract, user implementation, executed tests/results and open questions. Completion markers and next actions belong only in PLAN.md. Clarify intended behavior before changing tests for a revised contract; do not weaken tests just to match implementation.
+観測で検証できる内容は既存test、trace、手計算で扱います。たとえば[session storeの並行test](cmd/bridge/session_store_test.go)を読み、同じIDの並行要求で成功が1件になる理由を説明します。次に同じrequest IDで本文だけを変えたときの結果を予測し、L4の冪等性に応用します。
 
-授業はdomain契約からinterface、API、切替へ進みます。現在の完了状況と次の授業は[PLAN.md](PLAN.md)だけで管理します。UI授業はAPI・保存・記憶の受入後に行います。授業中の説明は中国語／英語、正式資料とUIは日英です。
+Use existing tests, traces or manual calculations when observation can answer the question. For example, read the [session-store concurrency test](cmd/bridge/session_store_test.go) and explain why one request wins when concurrent inserts use the same ID. Then apply that reasoning to L4 idempotency by predicting what happens when a request ID is reused with changed text.
 
-Lessons proceed from domain contracts to interfaces, APIs and switching. Track completion and the next lesson only in [PLAN.md](PLAN.md). UI lessons follow acceptance of the API, storage and memory stages. Teaching uses Chinese/English in chat; official material and UI use Japanese/English.
+機能を実装する回は、入出力・失敗・受入条件を先に決め、本人が既存codeを再利用して最小の変更を書きます。assistantが用意した契約testと観測結果でreviewします。契約が変わる場合は期待動作を先に確認し、testはその契約を反映します。
+
+For an implementation session, agree on inputs, outputs, failure behavior and acceptance first. The user writes the smallest change that reuses existing code, then reviews it with assistant-authored contract tests and observations. If the contract changes, clarify the expected behavior first and update tests to reflect that contract.
+
+記録は対象段階、説明できた設計判断、変更した契約、実行testと結果、残る疑問に絞ります。進捗と次回の演習は[PLAN.mdの学習ルート](PLAN.md#teaching-route)で管理します。授業中の説明は中国語／英語、正式資料とUIは日英です。
+
+Keep the record to the stage, a design decision the user can explain, any contract change, checks run and their results, and open questions. Track progress and the next exercise in the [learning route in PLAN.md](PLAN.md#teaching-route). Teaching uses Chinese/English in chat. Official material and the UI use Japanese/English.
 
 ## 検証の分け方 / Verification levels
 
