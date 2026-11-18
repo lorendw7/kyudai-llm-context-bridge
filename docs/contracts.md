@@ -1,6 +1,6 @@
 # 契約設計 / Contract design
 
-更新 / Updated: 2026-11-13。health、Session／Message、CreateTurnRequest／ModelClient契約、Bearer認証、session metadataの作成・取得・一覧、許可model ID一覧と環境起動を検証済みです。以下の完全API・turn処理・永続化は設計です。証拠は[PLAN.md](../PLAN.md)。
+更新 / Updated: 2026-11-18。health、Session／Message、CreateTurnRequest／ModelClient契約、Bearer認証、session metadataの作成・取得・一覧、許可model ID一覧と環境起動を検証済みです。以下の完全API・turn処理・永続化は設計です。証拠は[PLAN.md](../PLAN.md)。
 
 Verified implementation includes health, Session/Message, CreateTurnRequest/ModelClient contracts, Bearer authentication, session-metadata creation/retrieval/listing, configured model IDs and environment-based startup. The complete API below, turn processing and persistence remain designs. Evidence is in [PLAN.md](../PLAN.md).
 
@@ -138,6 +138,37 @@ Recovery from memory_pending never regenerates a saved answer. For a crash durin
 error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、UIはcodeを日英へ翻訳します。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。
 
 The error envelope carries code, request_id, retryable and state; the UI translates codes into JA/EN. Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state.
+
+<a id="l4-turn-design"></a>
+
+## L4の全履歴turn設計 / L4 full-history turn design
+
+2026-11-18の提案です。確認基点は `4f341b0` の [Go契約](../cmd/bridge/contracts.go)、[session store](../cmd/bridge/session_store.go)、[HTTP接続](../cmd/bridge/main.go) です。L4では同じGo process内の `full-history-v1` sessionと合成 `ModelClient` で、生成前後の状態・履歴を検証します。
+
+This proposal, dated 2026-11-18, draws on the [Go contracts](../cmd/bridge/contracts.go), [session store](../cmd/bridge/session_store.go) and [HTTP wiring](../cmd/bridge/main.go) at `4f341b0`. L4 uses a process-local `full-history-v1` session and a synthetic `ModelClient` to verify state and history around generation.
+
+### 受理と履歴 / Admission and history
+
+1. 認証と所有者確認の後、検証済みの要求をsession IDとrequest IDで検索します。同じ有効payload（schema、model、本文、有効な生成設定）は既存turnを返し、変更は409 conflictです。新規要求はmodelの許可を確認し、空いているsessionでのみ、request記録・user message・`accepted` を一つの原子操作で登録します。別IDで処理中なら409 busyを返します。
+2. executorは一度だけturnを `generating` にし、同じsessionの完了済みuser/assistant対を会話順に並べ、今回のuser messageを末尾に一度加えます。訂正前後の原文を両方残します。失敗・取消のuser messageは記録に残し、後続のモデル入力には含めません。
+3. executorは保存の排他区間を出て `ModelClient.Generate` を呼びます。有効な結果を受け取ったら、同じturnが `generating` の場合に限り、回答とmodel ID・usageの記録を `answer_saved` への遷移とともに保存します。全履歴では続けて `complete` に進みます。
+
+1. Authenticate and check session ownership before looking up the validated request by session ID and request ID. Matching effective payloads (schema, model, text and effective generation settings) return the existing turn. A change returns 409 conflict. For a new request, check the model allowlist and atomically record the request, user message and `accepted` state when the session is free. A different request ID while a turn is active returns 409 busy.
+2. The executor moves the turn to `generating` once. It assembles that session's completed user/assistant pairs in conversation order, followed by the current user message once. Both original and corrected statements remain in history. User messages from failed or cancelled turns remain recorded and are omitted from subsequent model input.
+3. Call `ModelClient.Generate` outside the store's critical section. Commit a valid answer, the model ID and usage together with the move to `answer_saved`, only while that turn is still `generating`. With full history, then advance to `complete`.
+
+### 失敗と競合の確認例 / Failure and race fixtures
+
+| 合成操作 / Synthetic action | 期待する観測 / Expected observation |
+| --- | --- |
+| 同一sessionでA → B → A / A → B → A in one session | Aが12日を受け、Bで15日に訂正、最後のAへの入力には元の指示・訂正・今回の質問が順に一度ずつ含まれる。固定fakeは15日を返す / A receives the 12th, B receives the correction to the 15th, and the final call to A contains the original instruction, correction and current question once each in order. The deterministic fake returns the 15th |
+| 同一requestの同時再送、新規requestとの競合 / Concurrent replay and a competing new request | 同一payloadは同じturnを返し、生成呼出しとuser messageは各1件。変更payloadはconflict、処理中の別IDはbusy / Matching payload returns the same turn with one generation call and one user message. Changed payload conflicts, and a different ID while active receives busy |
+| 生成期限、明示取消、遅延結果 / Generation deadline, explicit cancellation and late results | 期限は `failed`、回答保存前の有効な取消は `cancelled`。状態確定後の応答は書き込めず、保存が先に確定した回答は残る / A deadline produces `failed`. An explicit cancellation that wins before answer save produces `cancelled`. Late results cannot write after a terminal decision, and an answer committed first remains available |
+| HTTP切断または別所有者による照会 / HTTP disconnect or lookup by a different owner | 受理済みturnは切断後も続行し、所有者はrequest IDで照会できる。他user/labの照会は不存在と同じ404 / Accepted work continues after disconnect and is queryable by the owner via request ID. A lookup from another user/lab receives the same 404 as an absent record |
+
+期限・取消・回答保存の競合は、状態更新を直列化して決着させます。回答保存を確定する時点で生成期限も確認し、期限を過ぎた未確定回答は破棄します。HTTP切断のfixtureと、取消を無視して遅れて応答するfakeのfixtureは別にします。再起動、派生記憶、実モデルの応答品質は後続段階で扱います。作業と受入の一覧は [PLAN.md](../PLAN.md) にあります。
+
+Serialize state changes to settle races between the deadline, cancellation and answer save. Check the generation deadline at commit time and discard an uncommitted answer past that deadline. Use separate fixtures for HTTP disconnect and for a fake that returns late after cancellation. Restart behavior, derived memory and real-model answer quality belong to later stages. See [PLAN.md](../PLAN.md) for work and acceptance tracking.
 
 ## Worker契約 / Worker contract
 

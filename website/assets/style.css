@@ -65,6 +65,7 @@ button { font: inherit; }
 .status-item { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
 .status-heading + .status-item { margin-top: 0; }
 .status-item h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 14px; }
+.status-item a { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
 .status-item time { color: var(--muted); font-size: 12px; font-weight: 400; }
 .status-item p { margin-top: 7px; font-size: 14px; line-height: 1.7; }
 
@@ -88,7 +89,16 @@ button { font: inherit; }
 .architecture-figure img { width: 100%; height: auto; }
 .architecture-figure figcaption { display: flex; justify-content: space-between; gap: 18px; border-top: 1px solid var(--line); padding: 14px 18px; font-size: 13px; }
 .architecture-figure figcaption a { flex-shrink: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
-#architecture > .lead { max-width: 850px; padding-left: 14px; border-left: 2px solid var(--line); font-size: 14px; }
+.turn-design { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; }
+.turn-flow { margin: 0; padding: 0; list-style-position: inside; }
+.turn-flow li { border-top: 1px solid var(--line); padding: 12px 0; }
+.turn-flow li::marker { color: var(--accent); font-weight: 700; }
+.turn-flow h3 { display: inline; margin-left: 8px; }
+.turn-flow p { margin: 4px 0 0 24px; }
+.turn-exceptions { align-self: start; border: 1px solid var(--line); border-top: 2px solid var(--accent); padding: 18px 20px; background: var(--surface); }
+.turn-exceptions dl { margin: 0; }
+.turn-exceptions dt { margin-top: 12px; font-weight: 700; }
+.turn-exceptions dd { margin: 3px 0 0; font-size: 14px; }
 .methods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
 .methods li { border-top: 1px solid var(--line); padding-top: 14px; }
 .methods li > span { color: var(--accent); font-size: 11px; font-weight: 700; }
@@ -163,6 +173,7 @@ noscript p { margin-top: 18px; font-size: 14px; }
   .research-grid article { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 6px 10px; }
   .research-grid h3 { margin: 0; }
   .research-grid p { grid-column: 2; }
+  .turn-design { grid-template-columns: 1fr; gap: 16px; }
   .demo { grid-template-columns: 1fr; }
   .steps button { padding: 16px 20px; }
   .context-sheet { border-left: 0; border-top: 1px solid var(--line); padding: 22px 20px; }

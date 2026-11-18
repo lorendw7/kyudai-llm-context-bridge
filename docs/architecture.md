@@ -1,14 +1,14 @@
 # ADR-001: 保守可能な研究原型 / Maintainable research prototype
 
-更新 / Updated: 2026-11-12。状態 / Status: A案とMantineは選択済み。2026-11-10受入のdomain契約、versioned turn DTO、project固有の `ModelClient` interfaceを出発点に、以下のpackage分割・adapter・保存・UI境界を設計提案として整理します。 / Route A and Mantine are selected. Starting from the domain contracts, versioned turn DTO and project-owned `ModelClient` interface accepted on 2026-11-10, the package split, adapters, persistence and UI boundaries below remain design proposals.
+更新 / Updated: 2026-11-18。状態 / Status: A案とMantineは選択済み。2026-11-13に、既存のdomain・turn契約に加えて、認証付きsession metadata APIと許可model ID一覧を受け入れました。以下はturn実行、package分割、adapter、保存、UI境界の設計提案です。 / Route A and Mantine are selected. On 2026-11-13, acceptance extended from the domain and turn contracts to the authenticated session-metadata API and configured model ID list. Turn execution, package boundaries, adapters, storage and UI below are design proposals.
 
 決定者は利用者です。実装と導入は別途の受入・許可範囲に従います。進捗は[PLAN.md](../PLAN.md)のみで管理します。
 
 The user is the decision maker. Implementation and installation follow their acceptance and authorized scope. Track progress only in [PLAN.md](../PLAN.md).
 
-今回の結論は、Goを一つのapplicationとして維持し、外部I/Oをadapterで隔離する構成です。新しいpackageは独立した変更理由・実際の依存・test境界が生まれた時に追加します。研究機能codeの移動や実装は本人が担当し、今回の整理で実施済みとはしません。
+2026-11-18に利用者は段階的なモジュール化を選択しました。まず現在のGo process内でL4の切替と失敗時の動作を受け入れます。その後、実際の外部I/Oや独立したtest境界に合わせてpackageを分けます。研究機能の実装と再配置は本人が担当します。
 
-The proposal keeps Go as one application and isolates external I/O behind adapters. Add a package when an independent reason to change, a real dependency or a useful test boundary appears. The user owns research-code extraction and implementation; this design revision does not claim that work is done.
+On 2026-11-18 the user selected incremental modularization. First accept L4 switching and failure behavior in the current Go process. Then extract packages as external I/O and independent test boundaries emerge. The user owns research implementation and code moves.
 
 ## 目的と選択肢 / Context and options
 
@@ -22,6 +22,14 @@ One learner maintains the prototype, develops on Windows and later runs authoriz
 | Python単一application / Python-only application | processと型変換が少ない / Fewer processes and translations | Go学習・選択済みA案から外れる / Departs from Go learning and selected Route A |
 | 多数のmicroservices / Many microservices | 個別scale / Independent scaling | 配布、認証、障害処理が増える。現段階では不要 / More deployment, auth and failure handling; unnecessary now |
 | 完成chat製品のfork / Fork a complete chat product | 画面を再利用 / Reuses a UI | 独自session・記憶・更新の責務が衝突 / Competing session/memory ownership and upgrade burden |
+
+### Goの実装順序の選択 / Choice of Go implementation sequence
+
+| 選択肢 / Option | 利点と負担 / Benefit and cost |
+| --- | --- |
+| A · 段階的なモジュール化（選択済み） / Incremental modularization (selected) | 現在の `cmd/bridge` で切替を検証し、同じtestで後から境界の抽出を確認できる。境界が必要になるまでは同じpackageで責務を分ける / Verify switching in the current `cmd/bridge` package, then use the same tests to verify extraction. Separate responsibilities within that package until a package boundary is needed |
+| B · package境界を先に作る / Establish packages first | import制約を早期に確認できる。turn契約が変化する時期に型の公開・変換・移動も必要になる / Enforce import constraints early, with additional type exposure, mapping and code moves while the turn contract is still evolving |
+| C · APIと実行を別processにする / Separate the API and executor processes | 実行を独立して再起動できる。永続的なjobの受理・認領、障害検知、取消・遅延writeの調停が必要 / Restart execution independently, with durable admission/claiming, failure detection, cancellation and coordination of late writes |
 
 ## 技術スタック / Technology stack
 
@@ -94,10 +102,14 @@ This maps to the stages in [PLAN.md](../PLAN.md), not a second task list. Do not
 
 | 段階 / Stage | 分離する理由と範囲 / Reason and scope |
 | --- | --- |
-| S1 | 契約とHTTP処理が安定した時にdomain/app/httpapiを順に抽出。現在の学習codeを一括移動しない / Extract domain/app/httpapi as contracts and HTTP behavior stabilize; no bulk relocation of learning code |
-| S2 | 実Ollama・SQLite接続が出現した時にadapterを追加。保存の原子操作を先に定義 / Add adapters with actual Ollama/SQLite integrations; define atomic storage operations first |
+| S1 | 現在の `cmd/bridge` 内でL4を検証。認証済みsessionでfake A → B → A、重複・取消・遅延応答を確認し、後の抽出に同じfixtureを使う / Verify L4 inside the current `cmd/bridge`: fake A → B → A in an authenticated session, replay, cancellation and late results. Reuse the fixtures for later extraction |
+| S2 | Ollama呼出しとSQLiteの原子操作を実際のadapter境界にする。HTTP契約を保ち、先のfixtureに実推論での切替と再起動後の照会を加える / Use actual Ollama calls and SQLite atomic operations as adapter boundaries. Keep the HTTP contract and extend the existing fixtures with real switching and lookup after restart |
 | S3 | worker境界と3方式の違いが出現した時にmemory adapterとpolicyを分離 / Separate the memory adapter and policies when worker integration and three distinct policies exist |
 | S4–S5 | webとrunnerをnative API上に構築。必要な計測を追加し、再利用と独立更新の必要がある部分だけ抽出 / Build web and runner on the native API; add metrics and extract only for real reuse or independent updates |
+
+境界を抽出する変更と動作を追加する変更は、それぞれ同じ契約を検証できる差分にします。抽出では既存route、所有者判定、状態遷移を維持し、domain/appへのvendor依存や循環importを確認します。単一Go processでHTTP応答と有界な実行を保てる間は、その構成を使います。
+
+Keep boundary extraction and behavior changes independently verifiable against the same contract. During extraction, preserve routes, authorization and state transitions, and check for vendor dependencies in domain/app and import cycles. Use one Go process while it can serve HTTP and keep execution bounded.
 
 ## データと失敗 / Data and failures
 
@@ -138,9 +150,9 @@ Allow one active turn per session and initially serialize GPU work. Deletion adv
 
 Persist acceptance before returning 202. App owns bounded execution and recovery inside the Go process; HTTP handlers must not leave unmanaged per-request goroutines. Disconnecting HTTP does not cancel accepted work; cancellation uses the explicit API. Startup reconciles accepted/pending records and exposes uncertain inference as `recovery_required`, without blind regeneration after restart.
 
-永続化前のS1のin-memory演習ではprocess内の状態遷移だけを検証し、再起動回復は主張しません。上記の耐久性はS2の正本保存受入後に検証します。
+S1のL4では、同じGo process内で受理・履歴snapshot・回答確定の境界を検証します。storeは同じsessionのrequest記録・message・turnの更新を原子的に適用し、appはI/Oをその排他区間の外で実行します。これにより、後続のSQLite adapterでは同じ原子操作をtransactionで表現できます。状態と競合の詳しい設計は [L4のturn設計](contracts.md#l4-turn-design) を参照します。再起動回復はS2で検証します。
 
-Before persistence, S1 in-memory exercises verify process-local transitions without claiming restart recovery. Verify the durability above only after authoritative storage is accepted in S2.
+L4 in S1 verifies the admission, history snapshot and answer-commit boundaries inside one Go process. The store atomically updates a session's request records, messages and turns. The app performs I/O outside that critical section. A later SQLite adapter can express the same atomic operations as transactions. See the [L4 turn design](contracts.md#l4-turn-design) for states and races. S2 verifies restart recovery.
 
 組立入口がprocessの停止signalと期限を渡し、まず新しい受理を止め、進行中処理を確定または回復可能な状態にしてから接続を閉じます。workerもoperation状態を記録します。process自身が起動していないOllama等を暗黙停止しません。livenessと依存readinessを区別し、具体的な期限・上限は実装時に設定契約で固定します。
 

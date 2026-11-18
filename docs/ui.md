@@ -1,6 +1,6 @@
 # 研究UI設計 / Research UI design
 
-更新 / Updated: 2026-11-12。小型の自作React UIを先行し、第三者UIは後続の任意拡張とします。以下は提案で、UIコード・package manifest・依存はまだ作成／導入していません。 / Build a small owned React UI first; third-party clients are optional later. This is a proposal; UI code, package manifests and dependencies have not been created/installed.
+更新 / Updated: 2026-11-18。小型の自作React UIを先行し、第三者UIは後続の任意拡張とします。以下は提案で、UIコード・package manifest・依存はまだ作成／導入していません。 / Build a small owned React UI first; third-party clients are optional later. This is a proposal; UI code, package manifests and dependencies have not been created/installed.
 
 ## 選択：React + TypeScript + Vite + Mantine / Selection
 
@@ -114,6 +114,10 @@ Put test seams at boundaries. Synthetic DTO fixtures cover versions, missing fie
 Goがmodel allowlist、session所有権、policy、記憶、計測を決定します。UIはそれを表示します。UIで履歴要約やtoken数の推定を行ってserverの実測値として表示しません。model変更時も同じsession IDを使います。
 
 Go determines the model allowlist, session ownership, policy, memory and metrics. The UI displays them. Do not summarize history or estimate tokens in the UI and present them as server measurements. Switching models keeps the same session ID.
+
+S4のChat受入では、既存sessionで次のmodelを選んで送信し、再読込・再認証後に同じsessionを開いて、保存されたturnと回答を確認します。送信応答だけが途切れた場合は、送信時のrequest IDで状態を照会します。回答に付けるmodelはserverの記録から取得します。Go内部のpackageを抽出した後も同じ `/v1` fixtureで確認します。詳細は [L4のturn設計](contracts.md#l4-turn-design) を参照します。
+
+The first end-to-end S4 Chat test selects the next model in an existing session and submits a turn. After reloading and reauthenticating, reopen that session and verify the saved turn and reply. If only the submission response is lost, query the request ID used for submission. Read each reply's model from the server record. Use the same `/v1` fixture after internal Go package extraction. See the [L4 turn design](contracts.md#l4-turn-design).
 
 ## 状態・安全な操作 / States and safe interaction
 

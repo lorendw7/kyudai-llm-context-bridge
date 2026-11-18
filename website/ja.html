@@ -8,7 +8,7 @@
     <meta name="color-scheme" content="light">
     <title>Kyudai LLM Context Bridge — 文脈をつなぐ</title>
     <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="assets/style.css?v=20261112-warm-ink">
+    <link rel="stylesheet" href="assets/style.css?v=20261118">
     <link rel="alternate" hreflang="en" href="index.html">
     <script src="assets/demo.js" defer></script>
   </head>
@@ -26,6 +26,7 @@
         <div class="wrap">
           <a href="#research">研究について</a>
           <a href="#handoff">引き継ぎの例</a>
+          <a href="#prototype">原型設計</a>
           <a href="#architecture">構成</a>
           <a href="#resources">資料</a>
           <a class="repository-link" href="https://github.com/lorendw7/kyudai-llm-context-bridge">GitHub <span aria-hidden="true">↗</span></a>
@@ -50,12 +51,12 @@
               <a href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/PLAN.md">計画を見る <span aria-hidden="true">↗</span></a>
             </div>
             <div class="status-item">
-              <h3>L1–L2 受入済み <time datetime="2026-11-10">2026-11-10</time></h3>
-              <p>health、Session／Message検証、所有者判定、版付きturn DTO、ModelClient契約を確認。受入時にGo testとvetが成功しています。</p>
+              <h3>L1–L3 検証済み <time datetime="2026-11-13">2026-11-13</time></h3>
+              <p>ローカルAPIで認証、メモリ内のセッション情報の作成・取得・一覧、設定済みモデルIDの一覧を確認しました。</p>
             </div>
             <div class="status-item">
-              <h3>設計段階・実測前</h3>
-              <p>実モデル切替、保存、Mem0連携、研究UIは今後の実装です。品質やtoken削減の実測結果はまだありません。</p>
+              <h3><a href="#prototype">次の到達点（L4）</a></h3>
+              <p>テスト用の模擬モデルで、同じセッションの全履歴を使った A → B → A を検証します。品質とトークン削減量は未測定です。</p>
             </div>
           </aside>
         </div>
@@ -134,29 +135,60 @@
           </noscript>
         </div>
       </section>
+      <section id="prototype" class="section wrap">
+        <div class="section-heading">
+          <h2>原型でのターン処理の設計</h2>
+          <a class="text-link" href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/docs/contracts.md#l4-turn-design">L4の設計を読む <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="turn-design">
+          <ol class="turn-flow">
+            <li>
+              <h3>要求を受け付ける</h3>
+              <p>セッションの所有者とモデルの利用許可を確認し、要求とメッセージを一緒に記録します。</p>
+            </li>
+            <li>
+              <h3>会話の全履歴を渡す</h3>
+              <p>完了済みのやり取りと今回のメッセージを、選択した模擬モデルに渡します。最初の指示と後からの訂正は会話順に残します。</p>
+            </li>
+            <li>
+              <h3>回答を保存する</h3>
+              <p>回答をモデルIDとともに保存し、ターンを完了します。次のターンでは同じセッションで別のモデルを選べます。</p>
+            </li>
+          </ol>
+          <div class="turn-exceptions">
+            <h3>再試行と処理の中断</h3>
+            <dl>
+              <dt>再試行・二重送信</dt>
+              <dd>同じ要求の再送には既存ターンを返します。同じIDで内容が変わると競合になります。処理中の別IDは受け付けず、完了後に送信し直せます。</dd>
+              <dt>期限切れ・取消</dt>
+              <dd>期限切れは失敗として記録します。取消確定後に届いた回答は保存せず、すでに保存した回答は保持します。</dd>
+            </dl>
+          </div>
+        </div>
+      </section>
       <section id="architecture" class="section wrap">
         <div class="section-heading">
           <div>
             <p class="eyebrow">03 / SELECTED DESIGN</p>
             <h2>選択した構成</h2>
           </div>
-          <p>A案：Goブリッジ + Ollama + Mem0 OSS。<br>実装ルートを選択済み。連携と効果は未検証です。</p>
+          <p>まず単一のGoプロセスで切り替えを検証します。その後、ローカル推論と永続保存を追加し、記憶を連携します。</p>
         </div>
         <div class="research-grid">
           <article>
             <span class="number">01</span>
             <h3>Goブリッジ</h3>
-            <p>セッション、権限、モデル選択、文脈組立を担当する設計です。回答モデルが変わっても原会話を正本として保持します。</p>
+            <p>Goはセッションのアクセス権とターンの状態を管理します。再起動後も原会話と回答を保持するため、SQLiteを提案しています。</p>
           </article>
           <article>
             <span class="number">02</span>
-            <h3>Python + Mem0</h3>
-            <p>範囲を限定した記憶の抽出・検索、出典の参照、Qdrant local modeでの保存を担うworkerを提案しています。</p>
+            <h3>Ollama</h3>
+            <p>ローカルモデルを動かす実行基盤です。Goブリッジは、L4で模擬モデルに使うインターフェースを通してOllamaを呼び出す設計です。</p>
           </article>
           <article>
             <span class="number">03</span>
-            <h3>Ollama</h3>
-            <p>回答・補助生成・embedding用のローカル実行基盤として選択しました。共有するのは推論資源であり、会話や記憶ではありません。</p>
+            <h3>Python + Mem0 OSS</h3>
+            <p>利用者ごとに範囲を分けて記憶を抽出・検索し、元のメッセージをたどれるようにする処理を提案しています。</p>
           </article>
         </div>
         <details class="diagram">
@@ -170,7 +202,6 @@
           <a class="text-link" href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/docs/architecture.md">構成と設計理由を読む <span aria-hidden="true">↗</span></a>
           <a class="text-link" href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/docs/ui.md">研究UIの設計を見る <span aria-hidden="true">↗</span></a>
         </div>
-        <p class="lead">最初の到達点は、A → B → Aで訂正を保持し、別の利用者からのアクセスを拒否することです。引き継ぎ例は固定データで、動作するチャットアプリではありません。</p>
       </section>
       <section class="method-section" id="approach">
         <div class="wrap">
@@ -231,7 +262,7 @@
         </div>
         <div class="footer-bottom">
           <span>© 2026 Context Bridge contributors · <a href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/LICENSE">MIT License</a></span>
-          <span>サイト更新：2026年11月12日</span>
+          <span>サイト更新 <time datetime="2026-11-18">2026年11月18日</time></span>
           <a href="#main">ページ上部へ ↑</a>
         </div>
       </div>

@@ -1,8 +1,8 @@
 # 評価・玄界・報告 / Evaluation, Genkai and reporting
 
-更新 / Updated: 2026-11-08。すべて未実行の評価設計です。数値は固定前の提案で、project測定結果ではありません。実行の順序と進捗は[PLAN.md](../PLAN.md)にあります。
+更新 / Updated: 2026-11-18。すべて未実行の評価設計です。数値は固定前の提案で、project測定結果ではありません。実行の順序と進捗は[PLAN.md](../PLAN.md)にあります。
 
-Updated 2026-11-08. This is an unexecuted evaluation design. Numbers are proposals pending freeze, not project measurements. Execution order and progress are in [PLAN.md](../PLAN.md).
+Updated 2026-11-18. This is an unexecuted evaluation design. Numbers are proposals pending freeze, not project measurements. Execution order and progress are in [PLAN.md](../PLAN.md).
 
 ## 研究上の問い / Research question
 
@@ -25,6 +25,10 @@ Match answer-model switch order, model/tokenizer/template, helper/embedder, gene
 主評価は固定user scriptでの実session会話です。各方式の生成回答はその方式の履歴に入るため、後続の入力は同一にはなりません。この会話全体の差を主評価し、入力完全一致による因果効果とは主張しません。同じsource prefixを使うcontext-only診断は別の補助実験とし、集計を混ぜません。
 
 The primary evaluation uses real sessions with fixed user scripts. Generated answers enter each policy's own history, so later inputs are not identical. Evaluate the end-to-end conversation difference without claiming an effect under identical prompts. A context-only diagnostic using identical source prefixes is a separate secondary experiment and must not be pooled.
+
+段階的な実装では、S1の [合成fixture](contracts.md#l4-turn-design) は画面を介さずにmodel選択、訂正を含む履歴、状態を検証します。S2の実モデルsmokeでは同じ切替順でAPIと保存・再読込を確認します。後続runnerは研究UIと同じ `/v1` APIを使い、run/turn ID、要求modelと実行modelの識別子、終端状態、欠測理由をmanifestまたは結果に対応付けます。研究上の比較には、freeze済み条件で実行した評価runを使います。
+
+Under incremental implementation, the S1 [synthetic fixture](contracts.md#l4-turn-design) verifies model selection, history with corrections and state without a UI. The S2 real-model smoke test checks the API, storage and reload using the same switch order. The later runner uses the same `/v1` API as the research UI and ties run/turn IDs, requested and executed model identities, terminal states and reasons for missing observations to the manifest or results. Research comparisons use evaluation runs under frozen conditions.
 
 ## ケースと採点 / Cases and scoring
 
