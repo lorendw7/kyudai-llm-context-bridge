@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,12 +58,30 @@ func main() {
 		log.Fatal("Invalid model configuration: ", err)
 	}
 
+	address, err := listenAddressFromEnvironment()
+	if err != nil {
+		log.Fatal("Invalid listen configuration: ", err)
+	}
+
 	store := NewMemorySessionStore()
 	handler := newAPIHandler(auth, store, allowlist)
 
-	fmt.Println("Starting Bridge at http://127.0.0.1:8080")
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatal("Cannot listen: ", err)
+	}
 
-	if err := http.ListenAndServe("127.0.0.1:8080", handler); err != nil {
+	ctx, stop := signal.NotifyContext(
+		context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	fmt.Println("Starting Bridge at http://" + listener.Addr().String())
+
+	err = serve(ctx, newServer(handler), listener, shutdownTimeout)
+	stop()
+
+	if err != nil {
 		log.Fatal("Server stopped: ", err)
 	}
+
+	fmt.Println("Bridge stopped")
 }

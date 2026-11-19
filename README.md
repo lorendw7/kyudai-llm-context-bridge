@@ -14,13 +14,31 @@ This independent repository originates in a Kyushu University RA project. It stu
 
 As of 2026-11-13, verified implementation includes localhost health, Session/Message and turn-request/ModelClient contracts, Bearer authentication, owned-session creation/retrieval/listing, configured model IDs and environment-based startup. Sessions are in memory and responses contain metadata. Turn processing, switching, model adapters, memory, persistence, runner and research UI remain unaccepted. No quality or token-saving results have been measured. See [PLAN.md](PLAN.md) for verification evidence and progress.
 
-利用者が研究機能の実装コードを書きます。対象はGo、Python、React研究UI（`web/`）、設定、移行、運用script、runnerです。assistantはテスト・合成fixture・test-only fake、会話内の中国語／英語による指導・レビュー、依頼された日英文書を担当します。2026-11-12の利用者指定により、公開サイト（`website/`）と美術素材もassistantが担当します。
+利用者は研究の核心codeを書きます。対象は状態・並行実行・保存の原子操作・回復・context policy・記憶の調停・UIの状態処理・再生と集計など、設計判断を含む部分です。assistantはその判断をcodeへ写す外周を書きます。対象はHTTP handlerとDTO変換、error envelope、起動と停止、設定読込、migration実行の枠組み、workerのHTTP外殻、UIの画面構成と文言、runnerのCLI、job wrapperです。assistantはこのほかテスト・合成fixture・test-only fake、会話内の中国語／英語による指導・レビュー、依頼された日英文書、公開サイト（`website/`）と美術素材を担当します。2026-11-19に利用者が決めた分担で、各回の担当は[作業計画](PLAN.md#teaching-route)にあります。
 
-The user writes research implementation code: Go, Python, the React research UI (`web/`), configuration, migrations, operational scripts and the runner. The assistant owns tests, synthetic fixtures and test-only fakes, provides Chinese/English teaching and review in chat, and maintains requested Japanese/English documentation. The user additionally assigned the public website (`website/`) and visual assets to the assistant on 2026-11-12.
+The user writes the core research code: the parts that carry design decisions, such as state, concurrency, atomic storage operations, recovery, context policies, memory reconciliation, UI state handling, replay and aggregation. The assistant writes the surrounding code that translates those decisions: HTTP handlers and DTO mapping, the error envelope, startup and shutdown, configuration loading, the migration runner, the worker HTTP shell, UI layout and copy, the runner CLI and job wrappers. The assistant also owns tests, synthetic fixtures and test-only fakes, Chinese/English teaching and review in chat, requested Japanese/English documentation, the public website (`website/`) and visual assets. The user set this division on 2026-11-19; the [plan](PLAN.md#teaching-route) names the author for each lesson.
+
+<a id="product-scope"></a>
+
+## 何ができる製品か / What the finished product lets you do
+
+研究者がAに「締切は12日」と伝え、同じ会話でBに「15日に訂正」と伝えてから、再びAに締切を尋ねる。製品はAに渡した文脈と実際の回答を記録する。15日を答えられたかは評価の対象で、12日と答えた場合も結果に残す。
+
+A researcher tells A the deadline is the 12th, corrects it to the 15th with B in the same conversation, then asks A for the deadline. The bridge records which sources were supplied to A and what A actually answered. An answer of “the 12th” stays in the results so the researcher can see where continuity failed.
+
+| 想定する成果物 / Proposed delivery | 利用者ができること / User outcome | 完成を示す例 / Demonstration |
+| --- | --- | --- |
+| 最初のローカルAPI版 / First usable local API (S1–S2) | 全履歴で許可済みの実モデルを切り替え、回答を取得する / Switch authorized local models using full history and retrieve replies | 同じsessionでA → B → A。再起動後も保存回答が元の要求IDで返り、再送で生成が増えない / Switch A → B → A, restart, then retrieve the saved reply by its original request ID and replay without another generation |
+| ブラウザで使える研究版 / Interactive research version (S3–S4) | 日英のChat一画面で会話を再開し、次のモデルを選び、訂正の出典を開き、所有sessionをexport・削除する / Resume in one JA/EN Chat view, choose the next model, inspect a correction’s source, export and delete an owned session | Bの回答後はBを引き継ぐ。研究者は訂正元の発言を確認でき、削除完了後は会話と派生記憶を取得できない / B stays selected after its reply. The researcher can open the correction message, then verify that conversation and derived memory are inaccessible after deletion |
+| 再現可能な研究評価 / Reproducible evaluation (S5–S6) | 同じ固定シナリオを全履歴・逐次要約・Mem0で再生し、品質・token・時間・GPU使用を比較する / Replay frozen scripts with full history, rolling summary and Mem0 and compare quality, tokens, time and GPU use | manifestからモデル・設定・caseを特定し、JSONL/CSVと日英報告で失敗・欠測も追跡する / Trace models, configuration and cases from the manifest through JSONL/CSV to the bilingual report, including failures and missing observations |
+
+S1は合成モデルで通信・履歴・失敗を検証する段階です。実モデルの利用には配布物・依存の監査と実行許可が必要です。各段階の受入は[作業計画](PLAN.md#teaching-route)にあります。
+
+S1 exercises transport, history and failures with synthetic models. Real-model use depends on artifact and dependency review and execution authorization. See the [plan](PLAN.md#teaching-route) for each stage’s acceptance criteria.
 
 ## 読む順序 / Reading order
 
-学習を続ける場合は[次の演習 · L4](PLAN.md#l4-entry)から始めます。 / To continue learning, start with the [next L4 exercise](PLAN.md#l4-entry).
+L3の続きは[Bの回答をいつ「保存済み」と表示できるか](CONTRIBUTING.md#l4-state-lesson)の一問から始めます。今回書くコードと受入条件は[L4の作業計画](PLAN.md#l4-entry)にあります。 / To resume after L3, start with [When can B’s reply appear as saved?](CONTRIBUTING.md#l4-state-lesson). The [L4 plan](PLAN.md#l4-entry) defines the first code change and when to stop.
 
 | 文書 / Document | 内容 / Purpose |
 | --- | --- |
@@ -72,10 +90,6 @@ Maintainability rests on `HTTP → app → domain` dependencies and adapters imp
 
 ## 研究範囲 / Research scope
 
-同じsessionでのA → B → A、訂正と出典の保持、所有者の隔離、再起動・重複・部分失敗からの回復、export/deleteを扱います。全履歴・逐次要約・Mem0を固定条件で比較し、品質・token・時間・GPU負担を報告する計画です。
-
-The planned scope covers A → B → A within one session, corrections and provenance, owner isolation, recovery from restarts/duplicates/partial failures, and export/delete. Compare full history, rolling summaries and Mem0 under frozen conditions, reporting quality, tokens, time and GPU overhead.
-
 一般向けSaaS、学内SSO、多人数同時運用、ファイルRAG、agent tools、商用API、fine-tuningは初期範囲外です。第三者UI互換adapterは研究UI完成後の任意拡張です。
 
 A public SaaS, campus SSO, multi-user production operations, file RAG, agent tools, commercial APIs and fine-tuning are outside initial scope. A third-party UI adapter is an optional extension after the research UI.
@@ -93,9 +107,9 @@ go test -race ./... -count=1
 python tests/test_bridge_startup.py
 ```
 
-手動の `go run ./cmd/bridge` には `BRIDGE_TOKEN`、`BRIDGE_LAB_ID`、`BRIDGE_USER_ID`、`BRIDGE_MODEL_IDS` が必要です。model IDsは空白なしのcomma区切りで、空値・重複を拒否します。credentialはlocal環境で設定しcommitしません。healthだけが公開で、`/v1/` routeは `Authorization: Bearer <token>` を要求します。model一覧は設定値であり推論準備状態ではありません。
+手動の `go run ./cmd/bridge` には `BRIDGE_TOKEN`、`BRIDGE_LAB_ID`、`BRIDGE_USER_ID`、`BRIDGE_MODEL_IDS` が必要です。model IDsは空白なしのcomma区切りで、空値・重複を拒否します。任意の `BRIDGE_LISTEN_ADDRESS` はloopback IPの `host:port` で、未設定なら `127.0.0.1:8080` です。Ctrl+Cで受付を止め、進行中の要求を待ってから終了します。credentialはlocal環境で設定しcommitしません。healthだけが公開で、`/v1/` routeは `Authorization: Bearer <token>` を要求します。model一覧は設定値であり推論準備状態ではありません。
 
-Manual `go run ./cmd/bridge` requires `BRIDGE_TOKEN`, `BRIDGE_LAB_ID`, `BRIDGE_USER_ID` and `BRIDGE_MODEL_IDS`. Model IDs are comma-separated without whitespace; empty/duplicate entries are rejected. Set credentials locally and never commit them. Only health is public; `/v1/` routes require `Authorization: Bearer <token>`. The model list represents configuration, not inference readiness.
+Manual `go run ./cmd/bridge` requires `BRIDGE_TOKEN`, `BRIDGE_LAB_ID`, `BRIDGE_USER_ID` and `BRIDGE_MODEL_IDS`. Model IDs are comma-separated without whitespace; empty/duplicate entries are rejected. Optional `BRIDGE_LISTEN_ADDRESS` is a loopback-IP `host:port`, defaulting to `127.0.0.1:8080`. Ctrl+C stops accepting, waits for in-flight requests and exits. Set credentials locally and never commit them. Only health is public; `/v1/` routes require `Authorization: Bearer <token>`. The model list represents configuration, not inference readiness.
 
 ```sh
 python scripts/check_repository.py

@@ -32,6 +32,10 @@ Under incremental implementation, the S1 [synthetic fixture](contracts.md#l4-tur
 
 ## ケースと採点 / Cases and scoring
 
+実行modelの証拠に関する提案（S2で確認、S5で再利用）。現行の `GenerateResult` は回答とtoken数を返します。adapter導入時に、要求IDと要求modelを、runtimeが示したmodel識別子および監査済みartifactとの対応に結び付けます。同一artifactの別名は対応表で照合します。対応を確認できない場合は「未確認」、別artifactなら「不一致」を記録します。開発fixtureではBを要求してAを返す場合と、識別情報を返さない場合を使います。いずれもBの成功として採点せず、予定probeの分母・欠測理由・観測済みコストを保持します。[現在のGo契約](../cmd/bridge/contracts.go)
+
+Proposed execution evidence for the S2 adapter and S5 runner. The current `GenerateResult` returns content and token counts. Tie each request ID and requested model to the runtime-reported model identity and its mapping to the audited artifact. Resolve aliases of the same artifact through that mapping. Record an unverifiable mapping as unverified and a different artifact as a mismatch. Development fixtures should request B and return A, then omit execution identity in a separate case. Each counts as unsuccessful for the scheduled B probe. Retain the denominator, reason and observed costs. [Current Go contract](../cmd/bridge/contracts.go)
+
 6 family（recall、correction、temporal order、provenance、abstention、continuation）×日英2言語を想定します。開発は各組合せ1件で12件、最終は独立3件で36件です。翻訳や固有名詞置換だけで開発と最終を分けず、最終は異なる事実・経過・出典を持たせます。
 
 Use six families (recall, correction, temporal order, provenance, abstention, continuation) × two languages (JA/EN). One development case per combination gives 12; three independently authored final cases give 36. Do not create the held-out split merely by translating or renaming development cases; use different facts, trajectories and sources.

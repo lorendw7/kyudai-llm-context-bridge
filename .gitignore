@@ -23,6 +23,10 @@ logs/
 *.sqlite
 *.sqlite3
 
+# Build outputs
+*.exe
+/bridge
+
 # Datasets, model weights and generated experiment outputs
 /presentations/
 data/

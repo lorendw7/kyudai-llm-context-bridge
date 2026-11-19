@@ -50,6 +50,18 @@ def main():
             assert_port_free()
         print("PASS: four missing configuration values fail before listening")
 
+        for address in ("0.0.0.0:8080", "localhost:8080", "127.0.0.1:0"):
+            invalid = dict(fixture, BRIDGE_LISTEN_ADDRESS=address)
+            result = subprocess.run([str(binary)], cwd=ROOT, env=invalid,
+                                    capture_output=True, text=True, timeout=10,
+                                    creationflags=FLAGS)
+            assert result.returncode != 0, f"listen address {address} did not fail"
+            output = result.stdout + result.stderr
+            assert "Starting Bridge" not in output, "invalid address reached startup"
+            assert TOKEN not in output, "startup error exposed token"
+            assert_port_free()
+        print("PASS: non-loopback and malformed listen addresses fail before listening")
+
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
         def request(path, method="GET", data=None, authenticated=True, expected=200):
@@ -126,7 +138,14 @@ def main():
                         child.wait(timeout=5)
                 log.flush()
                 log.seek(0)
-                assert TOKEN not in log.read(), "server log exposed token"
+                logged = log.read()
+                assert TOKEN not in logged, "server log exposed token"
+                assert "Starting Bridge at http://127.0.0.1:8080" in logged
+                if os.name != "nt":
+                    # terminate() sends SIGTERM here, so the server must drain
+                    # and exit cleanly. On Windows it kills the process outright.
+                    assert child.returncode == 0, child.returncode
+                    assert "Bridge stopped" in logged
         with socket.socket() as probe:
             probe.settimeout(1)
             assert probe.connect_ex(("127.0.0.1", 8080)) != 0, "listener remains after cleanup"

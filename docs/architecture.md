@@ -6,9 +6,9 @@
 
 The user is the decision maker. Implementation and installation follow their acceptance and authorized scope. Track progress only in [PLAN.md](../PLAN.md).
 
-2026-11-18に利用者は段階的なモジュール化を選択しました。まず現在のGo process内でL4の切替と失敗時の動作を受け入れます。その後、実際の外部I/Oや独立したtest境界に合わせてpackageを分けます。研究機能の実装と再配置は本人が担当します。
+2026-11-18に利用者は段階的なモジュール化を選択しました。まず現在のGo process内でL4の切替と失敗時の動作を受け入れます。その後、実際の外部I/Oや独立したtest境界に合わせてpackageを分けます。核心codeとその再配置は本人、外周codeはassistantが担当します（[2026-11-19の分担](../AGENTS.md)）。
 
-On 2026-11-18 the user selected incremental modularization. First accept L4 switching and failure behavior in the current Go process. Then extract packages as external I/O and independent test boundaries emerge. The user owns research implementation and code moves.
+On 2026-11-18 the user selected incremental modularization. First accept L4 switching and failure behavior in the current Go process. Then extract packages as external I/O and independent test boundaries emerge. The user owns core code and its moves, and the assistant owns surrounding code ([division of 2026-11-19](../AGENTS.md)).
 
 ## 目的と選択肢 / Context and options
 
@@ -146,9 +146,9 @@ Allow one active turn per session and initially serialize GPU work. Deletion adv
 
 ### 実行の寿命 / Execution lifecycle
 
-202を返す前に受理状態を永続化します。appが同じGo process内の有界な実行・回復を管理し、HTTP handlerが所有者不明のgoroutineを要求ごとに放置しません。受理済みjobはHTTP切断で取消にならず、明示cancel APIを使います。起動時は受理済み・更新待ち記録を照合し、不確定な推論は `recovery_required` として可視化します。再起動後の無条件再生成は行いません。
+202を返す前に受理を記録します。S1はメモリ内、S2以降は永続保存です。appがGo process内の有界な実行・回復を管理し、受理済みjobはHTTP切断後も続行します。取消には明示APIを使います。起動時は[保存したturn状態](contracts.md#restart-cut-points)から、未送出の再開、全履歴回答の保存後の完了、不確定な推論の照合を判断します。
 
-Persist acceptance before returning 202. App owns bounded execution and recovery inside the Go process; HTTP handlers must not leave unmanaged per-request goroutines. Disconnecting HTTP does not cancel accepted work; cancellation uses the explicit API. Startup reconciles accepted/pending records and exposes uncertain inference as `recovery_required`, without blind regeneration after restart.
+Record acceptance before returning 202, in memory for S1 and durably from S2. App owns bounded execution and recovery inside the Go process. Disconnecting HTTP leaves accepted work running. Cancellation uses the explicit API. Startup uses the [durable turn state](contracts.md#restart-cut-points) to resume undispatched work, complete a saved full-history turn or expose uncertain inference for reconciliation.
 
 S1のL4では、同じGo process内で受理・履歴snapshot・回答確定の境界を検証します。storeは同じsessionのrequest記録・message・turnの更新を原子的に適用し、appはI/Oをその排他区間の外で実行します。これにより、後続のSQLite adapterでは同じ原子操作をtransactionで表現できます。状態と競合の詳しい設計は [L4のturn設計](contracts.md#l4-turn-design) を参照します。再起動回復はS2で検証します。
 
@@ -196,6 +196,28 @@ Maintainability means one place for a reason to change, replaceable external dep
 利点はprovider・store・UI更新の影響を閉じ込められることです。一方、境界のDTO変換、fake契約の維持、Go/worker間の部分失敗処理は必要になります。初期版では短い明示的なmappingと少数の契約fixtureを優先し、code generation基盤は契約が安定してから再検討します。
 
 This limits the impact of provider, storage and UI changes. The cost is explicit DTO mapping, maintaining fake contracts and handling partial failures between Go and the worker. Initially favor small explicit mappings and a few meaningful contract fixtures; reconsider code generation only after contracts stabilize.
+
+<a id="open-questions"></a>
+
+## 未決事項と決定時期 / Open questions and decision points
+
+2026-11-18の設計レビューで見つかった未決事項です。右列は提案で、決定者は利用者です。各項目は[学習ルート](../PLAN.md#teaching-route)の該当回で、実装前に本人が選択肢を比較して決めます。決定後は該当する契約へ移し、この表から外します。
+
+The design review on 2026-11-18 found these unresolved points. The right column is a proposal, and the user decides. Each item is settled in the matching lesson of the [learning route](../PLAN.md#teaching-route), where the user compares options before implementing. Move each decision into the relevant contract and remove it from this table.
+
+| 未決事項 / Open question | 現状と影響 / Current state and impact | 提案と決定回 / Proposal and lesson |
+| --- | --- | --- |
+| 応答の `revision` の意味 / Meaning of the response `revision` | 現行APIは常に1を返す。[契約](contracts.md)は曖昧な単一revisionを避けるとするが、この値がどの版かは未定義 / The current API always returns 1. The [contract](contracts.md) rejects a single ambiguous revision, yet this field's role is undefined | 原文版 `source_revision` として扱い、user・assistant messageの追記ごとに増やす。L4-4 / Treat it as `source_revision` and advance it on every appended user or assistant message. L4-4 |
+| 会話順の表現 / Representation of conversation order | 「追記順」と定めるが、Messageにあるのは `CreatedAt` のみ。同時刻で順序が決まらない / Order is defined as append order, but Message carries only `CreatedAt`, which cannot break ties | session内の単調増加の連番をstoreが採番する。時刻は表示用。L4-4 / The store assigns a monotonically increasing per-session sequence number. Timestamps are for display. L4-4 |
+| payload一致の判定 / Payload equality for replay | 「同じ有効payload」の対象fieldと正規化が未定義 / Fields and normalization behind "same effective payload" are undefined | schema・model・本文を空白も含め完全一致で比較し、既定の生成設定を含める。hashは保存を始めるS2で導入。L4-3 / Compare schema, model and text exactly, whitespace included, plus effective generation defaults. Introduce a hash with storage in S2. L4-3 |
+| session間の実行枠 / Execution capacity across sessions | 「暗黙queueなし」はsession内の規則。GPUを直列にすると、別sessionの `accepted` は待つことになるが、待ち数の上限と超過時の応答が未定義 / "No implicit queue" is a per-session rule. Serial GPU work makes `accepted` turns in other sessions wait, with no bound or overflow response defined | 待機数に上限を置き、超過は受理せず503と再試行可能の表示を返す。待ち時間はqueue時間として計測。L4-5 / Bound the number of waiting turns. Refuse admission beyond it with 503 marked retryable. Measure the wait as queue time. L4-5 |
+| 生成期限と時計 / Generation deadline and clock | 期限の値と起点が未定義。実時間に依存するtestは不安定になる / The deadline value and its starting point are undefined, and tests tied to wall-clock time become flaky | 期限は設定値とし、`generating` への遷移時から数える。時計と期限をtestから差し替えられる形で受け取る。L4-6 / Make the deadline configurable, counted from the move to `generating`. Accept the clock and deadline in a form tests can replace. L4-6 |
+| 失敗理由の記録 / Recording failure reasons | Turnの必須項目に失敗理由がなく、期限切れ・model error・回復不能を区別できない / Turn has no failure-reason field, so deadline, model error and unresolved recovery are indistinguishable | 終端状態に固定の理由codeを一つ持たせ、error envelopeの `code` と同じ語彙を使う。L4-8 / Give terminal states one reason code from a fixed vocabulary shared with the error envelope's `code`. L4-8 |
+| 認可の置き場所 / Where authorization lives | 設計はuse caseの責務とするが、現行は取得handler内で所有者を確認している / The design assigns it to use cases, while the current GET handler checks ownership itself | turnのuse caseを書く時に、session取得と所有者確認を一つの関数へまとめ、handlerはそれを呼ぶ。L4-7 / When writing the turn use case, combine session lookup and ownership checking in one function that handlers call. L4-7 |
+| 停止時の受理済みturn / Admitted turns at shutdown | 2026-11-19に [server](../cmd/bridge/server.go) へHTTPの期限、signalによる停止、設定できるloopback addressを実装済み。期限の値（header 5秒、読取り15秒、書込み30秒、idle 60秒、停止猶予10秒）は提案。停止時に `accepted`／`generating` のturnをどう確定するかは未定 / On 2026-11-19 the [server](../cmd/bridge/server.go) gained HTTP timeouts, signal-driven shutdown and a configurable loopback address. The timeout values (header 5s, read 15s, write 30s, idle 60s, shutdown grace 10s) are proposals. How `accepted` and `generating` turns settle at shutdown is undecided | 本人が期限の値を確認する。停止要求後は新しいturnを受理せず、猶予内に終わらない生成は取消して `failed` にする。L4-9 / The user confirms the timeout values. After a stop request, admit no new turns and cancel generation that outlasts the grace period, marking it `failed`. L4-9 |
+| 記憶更新が回復しないturn / A turn whose memory update never recovers | 回答保存済みで記憶更新が永久に失敗する場合の出口がなく、sessionが止まり続ける。現在の出口はsession削除のみ / A saved answer whose memory update fails permanently has no exit, so the session stays blocked. Deleting the session is the only way out | 所有者が「記憶未反映のまま完了」を明示的に選べる操作を設け、そのturnを出典に未反映と記録する。S3-5 / Add an explicit owner action to complete the turn with memory not applied, and record that gap in provenance. S3-5 |
+| worker間の認証 / Go-to-worker authentication | 「service認証」とあるが方式が未定義 / "Service authentication" is required without a mechanism | 起動時に生成した共有secretをloopback接続のheaderで渡す。Genkaiでは同一host上の他jobを考慮する。S3-1 / Pass a shared secret generated at startup in a header over loopback. On Genkai, account for other jobs on the same host. S3-1 |
+| 統計手法と採点者 / Statistics and raters | 「case単位のpaired uncertainty」の手法、採点者数、一致度の指標が未定義。目標の品質90%がどの方式を指すかも曖昧 / The method behind "paired case-level uncertainty", rater count and agreement measure are undefined. Which policy the 90% quality target applies to is also unclear | case単位のpaired bootstrapで信頼区間を出し、二重採点部分はCohenのκを報告する。90%は各方式に個別に適用する。freeze前のS6-2 / Use a case-level paired bootstrap for intervals and report Cohen's κ on the double-scored subset. Apply 90% to each policy separately. S6-2, before freezing |
 
 ## 見直す条件 / Revisit triggers
 

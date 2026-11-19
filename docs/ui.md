@@ -38,6 +38,36 @@ sessionの作成・選択・export/deleteはappの共通操作です。削除確
 
 App owns session creation, selection, export and deletion. The delete confirmation explains that it applies to the entire selected session.
 
+<a id="next-model"></a>
+
+### Bの回答後、次のモデルはどれか / Which model follows a reply from B?
+
+2026-11-18に利用者が選んだのは、同じ会話で直前に使ったモデルを入力欄に残す案です。次の3案はすべて、送信ごとにモデルを指定し、同じsessionの履歴を使います。
+
+On 2026-11-18 the user chose to keep the last model selected in the composer for the same conversation. All three options below send an explicit model ID with each message and use the same session history.
+
+| Bで回答した直後 / After B replies | 向いている使い方 / When it fits | 操作の負担 / Interaction cost |
+| --- | --- | --- |
+| **Bを引き継ぐ（選択済み） / Keep B (selected)** | Bで訂正し、そのまま何往復か進める / Correct a detail with B and continue discussing it | Bで続ける操作は不要。Aに戻す時に一度選ぶ / No selection to continue with B. Select A once to switch back |
+| 毎回選ぶ / Choose on every turn | 各送信で実験者がモデルを明示確認したい / The researcher wants to confirm every assignment | Bで続ける時にも選択が必要 / Repeated selection even for successive turns on B |
+| 固定のAに戻す / Reset to a fixed A | Bを一度だけ使い、通常はAで続ける / B is an occasional guest in an A conversation | 一度だけの切替は簡単。Bで続けるたびに再選択 / Easy to return after one turn, repeated selection to stay on B |
+
+**操作例 / Worked interaction.** Aとの会話でBを選び、締切を15日に訂正する。送信時にrequest ID・モデルB・本文が決まる。応答が途切れたら次の送信を保留し、そのIDで状態を照会する。Bの完了回答が戻れば、その回答の表示も入力欄の選択もB。そこでAを選ぶと入力欄だけが変わり、次の送信で新しいIDを使う。Bの回答と訂正の履歴は同じ会話に残る。
+
+While chatting with A, choose B and correct the deadline to the 15th. Sending fixes the request ID, model B and text for that turn. If the response is lost, hold the next send and look up that ID. When B’s completed reply arrives, both its label and the composer show B. Choosing A now changes only the composer. The next send uses a fresh ID, and B’s reply and the correction remain in the conversation. [Turn contract](contracts.md#l4-turn-design)
+
+初期表示の提案は、sessionを開いた時（再認証後も含む）に、そのsessionの最新の完了回答で使われたモデルを許可一覧と照合することです。完了回答がない場合やそのモデルが一覧から外れた場合は、選択を促して送信を待ちます。既存の履歴と許可一覧で復元でき、個別のモデル設定を保存する必要はありません。
+
+For initial display, we propose using the model on the most recent completed reply in the opened session, including after reauthentication, if it is still allowlisted. With no completed reply or an unavailable selection, prompt the user to choose before sending. This reuses the session history and model list without storing a separate preference.
+
+再読込の確認例は、Aの回答が完了し、Bへの訂正が受理された直後にタブを再読込する場合です。再認証して同じsessionを開くと、Bのturnを「処理中」と表示し、その要求IDで照会します。送信は確定状態まで保留し、Bが完了したら次のモデルをBにします。確認する回数はBへの生成1回、再読込による送信0回です。[再読込の契約案](contracts.md#session-recovery-export)
+
+For a reload check, finish a turn on A, submit the correction to B and reload the tab just after admission. Reauthenticate and reopen that session. Show B’s active turn and query its request ID. Hold the next send until the state permits it, then select B when its reply completes. Expected counts are one generation on B and zero submissions caused by reload. [Proposed reload contract](contracts.md#session-recovery-export)
+
+`view=conversation` に旧版のmetadataだけが返った場合は「履歴取得に未対応」と表示し、送信を保留します。空会話を表示できるのは、要求した形式でmessage・turnがともに空の場合です。
+
+If a server returns only legacy metadata for `view=conversation`, show “Conversation history unsupported” and hold submission. Display an empty conversation only when the requested response contains both an empty message list and an empty turn list.
+
 ## 情報の優先順位と配置 / Information hierarchy and layout
 
 ![研究UIの配置案：session情報、会話、次turnのmodel選択、派生記憶と出典。 / Proposed research UI layout: session context, conversation, next-turn model selection, derived memory and sources.](assets/research-ui-layout.svg)
@@ -52,6 +82,8 @@ The figure is a layout proposal, not a working screen or measured result. Its in
 | 2. 会話と状態 / Conversation and state | 原messageを時系列で表示。各回答には実行時modelとturn状態を併記し、次のmodel選択で過去のlabelを書き換えない / Show source messages chronologically; label each answer with its generating model and turn state, never relabel past answers when choosing the next model |
 | 3. 次の入力 / Next input | model選択を入力欄の近くに置き、「次の回答モデル / Model for next turn」と表示。送信可否の理由を入力欄の直前に示す / Place the model selector beside the composer with “Model for next turn”; explain why sending is unavailable immediately above the composer |
 | 4. 根拠の確認 / Inspect evidence | Memoryを「派生記憶 / Derived memory」と表示。記憶text、現在のrevision、source IDs・原messageへの移動を一組で見せる / Label Memory as “Derived memory”; group its text, current revision, source IDs and navigation to source messages |
+
+実行モデルが未確認なら「要求 B・実行未確認」、Aを実行した証拠があれば「要求 B・実行 A」と表示します。どちらの場合も、次のモデルは利用者に選択を促します。 / If execution identity is unavailable, show “Requested B · execution unverified”. If the evidence identifies A, show “Requested B · executed A”. Prompt for the next model in either case.
 
 Memoryでは有効な記録と置き換え済みの記録を分け、色だけで区別しません。訂正は新しいuser messageとして正本へ追加する設計です。UIだけで記憶を上書きしたり、assistant回答を検証済み事実として表示したりしません。source閲覧も現在のowner scope内に限定します。
 
@@ -137,6 +169,14 @@ Turn states follow the [contract design](contracts.md). Read state from the serv
 
 After requesting cancellation, show “Cancellation requested” as supplementary text without changing the state to cancelled. Stopping polling does not imply server cancellation. The full-history policy can complete without a derived-memory update.
 
+Bでの訂正が保存前に失敗・取消となったら、その発言に「次のモデルには未反映」と表示します。「状態を確認」は元の要求IDを照会し、「訂正を再送」はsessionが利用可能な時に新IDで一度送信します。再起動後の未確定turnでは「回答なしで終了」の効果を説明し、サーバーが終了を確定してから再送を選べるようにします。[回復契約](contracts.md#restart-cut-points)
+
+If B’s correction fails or is cancelled before answer save, label that message “Excluded from the next model’s input”. “Check status” looks up the original request ID. “Resend correction” sends once with a fresh ID when the session is available. For an unresolved turn after restart, explain what closing without an answer does and offer retry after the server confirms closure. [Recovery contract](contracts.md#restart-cut-points)
+
+同じturnへの状態照会は一度に1件とし、取消・回復操作の確定、対象turnやsessionの変更で古い照会を無効にします。Bの取消確定後に古い `generating` が到着しても、表示・送信可否・次のモデル選択を巻き戻しません。
+
+Keep one status read in flight per turn and invalidate older reads when cancellation or reconciliation is confirmed or the selected turn or session changes. If a stale `generating` response arrives after B’s cancellation is confirmed, preserve the confirmed status, send availability and next-model selection.
+
 `deleting`と`deleted`はsessionの状態です。削除中はsession全体の操作を止めて完了を照会し、確定後にそのsessionの画面・cacheを除去します。turnの成功や取消を削除完了の証拠にはしません。
 
 Deleting and deleted are session states. During deletion, block operations for that session and query completion; after confirmation, remove its views and cached content. A successful or cancelled turn is not evidence that deletion completed.
@@ -168,9 +208,9 @@ Initially render model/memory text as plain text, without arbitrary HTML. Keep a
 
 During development, a local Vite proxy reaches Go; for distribution, Go serves the static build. Node is not needed in the inference runtime. Separate public website/ from private research web/; GitHub Pages does not call the local API. Dependency installation and build configuration belong to the user.
 
-2026-11-12に公開サイト `website/` と美術素材をassistant担当へ変更しました。研究UI `web/` の機能codeは引き続き本人担当です。公開サイトのCSSや説明図を研究UIの実装・受入の代わりにはしません。
+2026-11-12に公開サイト `website/` と美術素材をassistant担当へ変更しました。研究UI `web/` は2026-11-19の分担により、状態・通信・回復の処理を本人、画面構成・文言・配信をassistantが担当します。公開サイトのCSSや説明図を研究UIの実装・受入の代わりにはしません。
 
-On 2026-11-12, the public website/ and visual assets were reassigned to the assistant. The user still owns functional code for the research web/ UI. Public-site CSS and explanatory diagrams do not constitute research-UI implementation or acceptance.
+On 2026-11-12, the public website/ and visual assets were reassigned to the assistant. Under the division of 2026-11-19, the user owns state, API and recovery logic in the research web/ UI, and the assistant owns layout, copy and serving. Public-site CSS and explanatory diagrams do not constitute research-UI implementation or acceptance.
 
 libraryのversionとlockfileを固定し、更新時はtypecheck、component tests、主要E2Eを実行します。日本語・英語のlabel、keyboard、focus復帰、狭幅を検証します。表示文言とerror codeの辞書を分離し、library更新がAPI仕様を変えないようにします。
 

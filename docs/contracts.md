@@ -42,7 +42,7 @@ The flow is: server configuration → constructor copy → Authorization-token l
 | Principal | credentialから解決する `lab_id`, `user_id`。bodyから採用しない / Resolve lab_id/user_id from credentials, never from the body |
 | Session | `id`, owner scope, `policy_id`, `policy_version`、原文版・失効世代、status、timestamps。policyは作成時固定 / Identity, ownership, fixed policy/version, source revision, invalidation epoch, status and timestamps |
 | Message | `id`, `session_id`, author/role, content, source revision, created time。訂正も新しいsource / Identity, session, author/role, content, revision and time; a correction is a new source |
-| Turn | request ID、payload hash、user/answer message IDs、selected model、状態、usage、pending operation / Request ID/hash, message IDs, selected model, state, usage and pending operation |
+| Turn | request ID、payload hash、user/answer message IDs、要求model、実行modelの証拠（取得時）、状態、usage、pending operation / Request ID/hash, message IDs, requested model, evidence of executed model when available, state, usage and pending operation |
 | MemoryRecord | worker memory ID、scope、text、source IDs、記憶版・適用済み原文版・session世代、抽出version、validity / Worker ID, scope, text, source IDs, memory/applied-source revisions, session epoch, extraction version and validity |
 | ContextPlan | policy/version、選択source/memory IDs、token budget、omissions、count方式 / Policy/version, selected IDs, budget, omissions and counting method |
 | RunManifest | case/config hash、code/dependency/model versions、policy、seed、artifact hash / Case/config hashes, code/dependency/model versions, policy, seed and artifacts |
@@ -76,7 +76,8 @@ Deletion does not complete merely by advancing Go's epoch. The worker must persi
 | `GET /v1/models` | 許可済みlocal model ID・能力のみ。自動downloadなし / Allowlisted local model IDs/capabilities; no automatic download |
 | `POST /v1/sessions` | policyを固定してsession作成 / Create a session with fixed policy |
 | `GET /v1/sessions` | 所有sessionの一覧 / List owned sessions |
-| `GET /v1/sessions/{id}` | 保存messageとturn状態を再読込 / Reload persisted messages and turn state |
+| `GET /v1/sessions/{id}` | 受入済みの4項目のmetadata / Accepted four-field metadata response |
+| `GET /v1/sessions/{id}?view=conversation` | 提案。所有sessionのmessageとturnを再読込 / Proposed opt-in view of messages and turns in an owned session |
 | `POST /v1/sessions/{id}/messages` | 1つのuser message、model ID、request IDを受理 / Accept one user message, model ID and request ID |
 | `GET /v1/sessions/{id}/turns/{request_id}` | 下記の正確なturn状態enumを照会 / Read the exact turn-state enum defined below |
 | `POST /v1/sessions/{id}/turns/{request_id}/cancel` | 取消を要求し、確定状態を返す / Request cancellation and return authoritative state |
@@ -86,9 +87,21 @@ Deletion does not complete merely by advancing Go's epoch. The worker must persi
 | `DELETE /v1/sessions/{id}` | 削除開始。完了まで状態照会し、全storeの除去を確認 / Start deletion; poll and verify removal from all stores |
 | `GET /v1/runs` / `GET /v1/runs/{id}` | 所有する完了／失敗runのmetricsを閲覧 / Read owned completed/failed-run metrics |
 
-最初のmessage APIは非streamingのjob型です。受理は202とturn ID、完了はGETで取得します。answer保存前の切断でもrequest IDで再照会できます。削除は202で開始し、sessionの `deleting/deleted` 状態を確認します。deleted tombstoneは本文を持たず、所有者だけが一定期間照会可能とする提案です。
+最初のmessage APIは非streamingのjob型です。新規受理時は202、送信時の `request_id`、および `GET /v1/sessions/{id}/turns/{request_id}` を指すLocationを返す案です。回答保存前の切断でも同じIDで再照会できます。削除は202で開始し、sessionの `deleting/deleted` 状態を確認します。deleted tombstoneは本文を持たず、所有者だけが一定期間照会可能とする提案です。
 
-The initial message API is a non-streaming job API. Acceptance returns 202 and a turn ID; GET retrieves completion. A disconnected client can query by request ID. Deletion begins with 202 and exposes deleting/deleted session state. A content-free deleted tombstone is proposed for owner-only status queries during a defined retention period.
+The initial message API is a non-streaming job API. For a newly accepted request, the proposal returns 202, the submitted `request_id` and a Location pointing to `GET /v1/sessions/{id}/turns/{request_id}`. A disconnected client can use that same ID to retrieve the outcome. Deletion begins with 202 and exposes deleting/deleted session state. A content-free deleted tombstone is proposed for owner-only status queries during a defined retention period.
+
+<a id="session-recovery-export"></a>
+
+### 再読込とexportの応答案 / Proposed reload and export responses
+
+**再読込（S1から） / Reload (from S1).** Chatが `view=conversation` を指定した時に、metadata、会話順のturn（要求ID・要求model・状態・message参照）、対応するmessageを同じsnapshotで返す案です。進行中や回復待ちのturnも返します。ブラウザが送信応答と手元のIDを失っても、受理済みのturnをこの一覧から照会できます。受理の記録を確認できない間は自動送信せず、状態を再読込します。別所有者には従来通り不存在と同じ404を返します。既定の4項目は[既存のGETテスト](../cmd/bridge/session_get_http_test.go)で検証します。
+
+When Chat requests `view=conversation`, return metadata, turns in conversation order (request ID, requested model, state and message references) and their messages in one snapshot. Include active turns and those awaiting recovery. A browser that lost both the submission response and its local ID can find admitted work in this list and query it. While admission is uncertain, refresh status without automatically submitting. Foreign sessions retain the same 404 as missing sessions. The [existing GET test](../cmd/bridge/session_get_http_test.go) checks the four-field default.
+
+**Exportと削除（S3） / Export and deletion (S3).** 完全exportは一つの所有sessionの正本snapshotと、同じ世代でその時点までに必要な記憶更新を反映した出典を含みます。全履歴では派生記憶は不要です。例として、12日から15日への訂正が記憶更新待ちなら409を返し、回復後に再取得します。workerが利用不能なら503です。Goは応答確定直前に所有scope・世代と対象版を再照合し、途中で削除が始まった場合は本文を返しません。削除完了は管理対象storeに適用され、既に利用者が保存したexportは手元に残ります。
+
+A complete export includes one owned session’s source snapshot and provenance from any required memory updates through that snapshot in the same session epoch. Full history needs no derived memory. For example, if the correction from the 12th to the 15th awaits a memory update, return 409 so the owner can export after recovery. Worker unavailability returns 503 when that worker is required. Before committing the response, Go rechecks the owner scope, epoch and target revisions. If deletion won the race, return no session content. Confirmed deletion covers the managed stores. A copy already downloaded by the user stays with them.
 
 契約fixture例（所有者・履歴はserverが決定） / Example contract fixture (the server determines ownership and history):
 
@@ -131,15 +144,28 @@ stateDiagram-v2
     memory_pending --> complete
     memory_pending --> recovery_required
     recovery_required --> memory_pending
+    recovery_required --> failed: owner closes unresolved unsaved turn
 ```
 
 `memory_pending`からの回復は保存answerを再生成しません。推論中crashの `recovery_required` は実行結果の有無を調べ、必要なら明示的な新requestでやり直します。上図の回復→memory_pendingはanswer保存済みの場合だけです。全履歴policyは派生更新なしでcompleteへ進めます。取消はbest effortで、保存済みanswerを取り消しません。
 
 Recovery from memory_pending never regenerates a saved answer. For a crash during inference, recovery_required inspects whether a result exists; a new explicit request may be needed. The diagram's recovery→memory_pending transition applies only to saved answers. Full-history policy can complete without a derived update. Cancellation is best effort and does not undo a persisted answer.
 
-error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、UIはcodeを日英へ翻訳します。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。
+<a id="restart-cut-points"></a>
 
-The error envelope carries code, request_id, retryable and state; the UI translates codes into JA/EN. Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state.
+**再起動時の判定案（S2） / Proposed restart decisions (S2).** 外部呼出しの前に `generating` を確定し、回答・usage・`answer_saved` は一つのtransactionで保存します。これで再起動時に次の区別ができます。
+
+Commit the move to `generating` before dispatching to the model. Commit the answer, usage and `answer_saved` in one transaction. Those boundaries give the recovering executor the following decisions.
+
+| 再起動時の正本 / Durable record on restart | 回復する動作 / Recovery action |
+| --- | --- |
+| `accepted` | 未送出の同じturnを一度だけ排他的に取得し、通常の期限・取消条件で続行 / Claim the undispatched turn once and continue under the normal deadline and cancellation rules |
+| `generating`、保存回答なし / No committed answer | `recovery_required` にして次送信を保留。照合しても結果を確定できない場合、所有者は既存reconcile操作で「回答なしで終了」を選べる。正本の回答が依然なく同じturnが回復待ちの場合だけ原子的に `failed` とし、実行結果不明の理由を残す。旧turnは再開せず、遅い結果を書き込ませない。その後の再試行は新IDで明示送信 / Hold new sends in `recovery_required`. If reconciliation cannot resolve the outcome, the owner may explicitly close the turn without an answer via reconcile. Atomically require that the same turn still awaits recovery and has no committed answer. Mark it `failed`, retain the unknown execution outcome and reject late writes to that turn. Any subsequent retry is an explicit new request ID |
+| 全履歴の `answer_saved` または `complete` / Full-history saved or complete | 保存回答を同じIDで返し、必要なら `answer_saved → complete` を確定。追加の推論は0回。派生記憶のある方式では未完了の記憶更新だけを照合（S3） / Return the committed answer under the same ID and finish `answer_saved → complete` if needed. Zero additional generations. For a policy with derived memory, reconcile outstanding memory work separately in S3 |
+
+error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、UIはcodeを日英へ翻訳します。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。現行の実装はこのほかに、4096 bytes超のbodyへ413、routeにないmethodへ405、内部の生成・encode失敗へ500を返します。
+
+The error envelope carries code, request_id, retryable and state; the UI translates codes into JA/EN. Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state. The current implementation also returns 413 for bodies over 4096 bytes, 405 for methods a route does not define and 500 for internal generation or encoding failures.
 
 <a id="l4-turn-design"></a>
 
@@ -160,6 +186,10 @@ This proposal, dated 2026-11-18, draws on the [Go contracts](../cmd/bridge/contr
 3. Call `ModelClient.Generate` outside the store's critical section. Commit a valid answer, the model ID and usage together with the move to `answer_saved`, only while that turn is still `generating`. With full history, then advance to `complete`.
 
 ### 失敗と競合の確認例 / Failure and race fixtures
+
+同じsession内の会話順は正本への追記順で決めます。時刻が同じでも順序を保持し、modelを履歴の絞り込み条件に使いません。失敗・取消の再送では、元のIDと同じpayloadなら元の終端状態を返します。訂正を有効にするには利用者が新IDで改めて送り、そのturnが完了する必要があります。遅延した旧turnの完了処理は新turnの実行枠を解放できません。枠の解放も対象turnのIDと状態を照合して行います。
+
+Use authoritative append order within the session, including when timestamps tie. Include completed pairs across model IDs. Replaying the original ID and payload after failure or cancellation returns that terminal turn. To apply the correction, the user explicitly submits it under a fresh ID and that turn must complete. A late callback from the old turn cannot release the new turn’s slot. Releasing the slot checks both the turn identity and its state.
 
 | 合成操作 / Synthetic action | 期待する観測 / Expected observation |
 | --- | --- |

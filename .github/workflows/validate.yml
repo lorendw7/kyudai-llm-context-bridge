@@ -8,17 +8,29 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 1.25.x is the minimum declared in go.mod; 1.26.x is the version
+        # used for local acceptance.
+        go-version: ['1.25.x', '1.26.x']
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: ${{ matrix.go-version }}
           cache: false
       - name: Check Go formatting
         shell: bash
         run: test -z "$(gofmt -l .)"
+      - name: Run go vet
+        run: go vet ./...
       - name: Run Go tests
-        run: go test ./... -count=1
+        run: go test ./... -count=1 -timeout=60s
+      - name: Run Go tests with the race detector
+        run: go test -race ./... -count=1 -timeout=120s
+      - name: Run startup verification with synthetic configuration
+        run: python3 tests/test_bridge_startup.py
       - name: Check documentation, website, and common credential patterns
         run: python3 scripts/check_repository.py
       - name: Check JavaScript syntax
