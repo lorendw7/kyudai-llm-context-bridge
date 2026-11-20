@@ -185,6 +185,16 @@ This proposal, dated 2026-11-18, draws on the [Go contracts](../cmd/bridge/contr
 2. The executor moves the turn to `generating` once. It assembles that session's completed user/assistant pairs in conversation order, followed by the current user message once. Both original and corrected statements remain in history. User messages from failed or cancelled turns remain recorded and are omitted from subsequent model input.
 3. Call `ModelClient.Generate` outside the store's critical section. Commit a valid answer, the model ID and usage together with the move to `answer_saved`, only while that turn is still `generating`. With full history, then advance to `complete`.
 
+<a id="replay-equality"></a>
+
+**再送の判定（2026-11-20に利用者が決定） / Replay equality (decided by the user on 2026-11-20).** 同じsessionで同じrequest IDの要求は、schema version・model ID・本文が完全一致する時だけ同一とみなし、既存turnを返します。本文の空白・改行・大小文字の違いも変更です。正規化やhashは使いません。hashは保存を始めるS2で再検討します。現行の `CreateTurnRequest` には生成設定がないため、比較対象はこの3項目です。生成設定を加えるときは比較にも加えます。比較の前に受け取った要求を検証し、不正な要求は競合ではなく不正要求として扱います。request IDが異なる要求は再送ではありません。turnの状態に関係なく同じ判定を使い、失敗・取消のturnへの同一再送は元の終端状態を返します。
+
+Two requests with the same request ID in one session are the same only when schema version, model ID and text match exactly; the existing turn is returned. Any difference in whitespace, line breaks or case in the text is a change. No normalization or hash is used; reconsider hashing when storage starts in S2. The current `CreateTurnRequest` has no generation settings, so these three fields are compared; add settings to the comparison when they are added to the request. Validate the incoming request before comparing, and treat an invalid request as invalid rather than as a conflict. A request with a different request ID is not a replay. The same rule applies whatever the turn's state, so an identical replay of a failed or cancelled turn returns its original terminal state.
+
+**状態の更新（2026-11-20に利用者が決定） / State updates (decided by the user on 2026-11-20).** `Turn` は値として扱います。状態を変えるmethodは元の値を変えず、新しい `Turn` を返します。storeが保持する値を変えるのは、storeの排他区間で新しい値を受け取った時だけです。
+
+Treat `Turn` as a value. Methods that change state return a new `Turn` and leave the original unchanged. The store's held value changes only when it accepts a new value inside its critical section.
+
 ### 失敗と競合の確認例 / Failure and race fixtures
 
 同じsession内の会話順は正本への追記順で決めます。時刻が同じでも順序を保持し、modelを履歴の絞り込み条件に使いません。失敗・取消の再送では、元のIDと同じpayloadなら元の終端状態を返します。訂正を有効にするには利用者が新IDで改めて送り、そのturnが完了する必要があります。遅延した旧turnの完了処理は新turnの実行枠を解放できません。枠の解放も対象turnのIDと状態を照合して行います。
