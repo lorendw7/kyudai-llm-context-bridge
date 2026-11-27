@@ -111,7 +111,7 @@ stdout carries only the result. Progress, request IDs and errors go to stderr. `
 | 1 | turnが `failed` または `cancelled` / The turn is `failed` or `cancelled` |
 | 2 | 使い方の誤り、不正な入力（422） / Usage error or invalid input (422) |
 | 3 | 認証失敗、対象なし（401、404） / Authentication failure or no such object (401, 404) |
-| 4 | 競合、busy（409） / Conflict or busy (409) |
+| 4 | 競合、busy、上限超過（409、429） / Conflict, busy or limit exceeded (409, 429) |
 | 5 | serviceに届かない、依存未準備（接続失敗、503） / Service unreachable or dependency not ready (connection failure, 503) |
 | 6 | 未解決。待機の中断・期限、`memory_pending`、`recovery_required` / Unresolved: interrupted or timed-out wait, `memory_pending`, `recovery_required` |
 | 7 | 非互換の応答、未知の状態 / Incompatible response or unknown state |
