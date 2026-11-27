@@ -212,6 +212,47 @@ Use authoritative append order within the session, including when timestamps tie
 
 Serialize state changes to settle races between the deadline, cancellation and answer save. Check the generation deadline at commit time and discard an uncommitted answer past that deadline. Use separate fixtures for HTTP disconnect and for a fake that returns late after cancellation. Restart behavior, derived memory and real-model answer quality belong to later stages. See [PLAN.md](../PLAN.md) for work and acceptance tracking.
 
+<a id="other-programs"></a>
+
+## 他のprogramからの利用 / Use from other programs
+
+2026-11-27に利用者が報告した要件です。他の人が書いたprogramも同じAPIを呼べるようにします。以下のうち、認証の方式・到達範囲・schemaの形式は提案で、[未決事項](architecture.md#open-questions)にあります。
+
+This requirement was reported by the user on 2026-11-27: programs written by other people must be able to call the same API. Of what follows, the authentication scheme, network reach and schema format are proposals listed among the [open questions](architecture.md#open-questions).
+
+APIはHTTPとUTF-8のJSONだけを使うので、HTTP clientを持つ言語ならどれからでも呼べます。言語ごとのSDKは要りません。CLIもrunnerも、この同じAPIを呼ぶclientの一つです。呼出しは次の4段階です。
+
+The API uses only HTTP and UTF-8 JSON, so any language with an HTTP client can call it. No per-language SDK is needed. The CLI and runner are simply two clients of this same API. A call has four steps.
+
+| 段階 / Step | 要求 / Request | 状態 / Status |
+| --- | --- | --- |
+| 1. 認証 / Authenticate | 全ての `/v1/` 要求に `Authorization: Bearer <token>` / On every `/v1/` request | 受入済み / Accepted |
+| 2. session作成 / Create a session | `POST /v1/sessions`、本文 `{"schema_version":"1","policy_id":"full-history-v1"}`。201と `id` が返る / Returns 201 with `id` | 受入済み / Accepted |
+| 3. 発言を送る / Send a message | `POST /v1/sessions/{id}/messages`、本文は上の[契約fixture](#session-recovery-export)の4項目。`request_id` は呼出し側が作る。202とLocationが返る / Body has the four fields of the [contract fixture](#session-recovery-export) above. The caller creates `request_id`. Returns 202 with Location | 提案、L4-8 / Proposed, L4-8 |
+| 4. 結果を取る / Fetch the result | `GET /v1/sessions/{id}/turns/{request_id}` を終端状態まで繰り返す / Repeat until a terminal state | 提案、L4-8 / Proposed, L4-8 |
+
+```sh
+curl -s -X POST http://127.0.0.1:8080/v1/sessions \
+  -H "Authorization: Bearer $BRIDGE_TOKEN" -H "Content-Type: application/json" \
+  -d '{"schema_version":"1","policy_id":"full-history-v1"}'
+```
+
+呼出し側が守る約束は四つです。`request_id` を自分で作って保存し、応答が届かなければ同じIDと同じ本文で再送する。409 busyでは自動で連投しない。状態は[正本の8つの名前](#turn-states)で判定し、未知の状態では送信を止める。`user_id` や `lab_id` を送っても無視され、所有者はtokenで決まる。
+
+A caller keeps four promises. Create and keep its own `request_id`, and replay with the same ID and text when a response is lost. Do not resubmit automatically on 409 busy. Judge state by the [eight canonical names](#turn-states) and stop sending on an unknown one. Any `user_id` or `lab_id` it sends is ignored; the token determines ownership.
+
+言語への対応は、SDKを配るのではなく契約を配る方針です。本書と契約fixtureに加えて、routeと型を記述したOpenAPI fileを一つ置き、呼出し側は自分の言語の生成toolでclientを作れます。fileは契約fixtureと照合するtestで実装とのずれを検出します。project自身が保守するclientはGoの `internal/client` だけです。
+
+Language support means distributing the contract, not SDKs. Alongside this document and the contract fixtures, one OpenAPI file describes routes and types, and callers can generate a client with their own language's tooling. A test compares the file with the contract fixtures to catch drift from the implementation. The only client this project maintains is Go's `internal/client`.
+
+現在の実装で足りないものは二つです。tokenは一つで全員が同じ所有者になり、loopback以外では待ち受けません。同じ機械の上のprogramは今でも呼べますが、他の人ごとの隔離と他の機械からの到達には、未決事項の決定が要ります。
+
+The current implementation lacks two things. There is one token, so every caller would be the same owner, and the server refuses to listen beyond loopback. A program on the same machine can call it today, while per-person isolation and reach from other machines await the open decisions.
+
+OpenAI互換のrouteは提供しません。既存のOpenAI用clientの要求にはsession IDがなく、base URLを変えるだけでは同じsessionの継続になりません。必要が出たら別ADRで扱います。
+
+No OpenAI-compatible route is offered. Requests from existing OpenAI clients carry no session ID, so changing the base URL alone does not continue a session. Handle it in a separate ADR if the need arises.
+
 ## Worker契約 / Worker contract
 
 Goはversioned local HTTP/JSONで `ingest`, `search`, `inspect`, `export`, `delete`, `operation-status` を呼ぶ提案です。全操作にservice認証、scope、session世代、operation IDを含め、ingestには対象source IDsと原文版も付けます。Goとworkerはそれぞれscopeを検証します。workerはraw Mem0 objectを公開せず、project DTOに正規化します。
