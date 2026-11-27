@@ -51,12 +51,12 @@
               <a href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/PLAN.md">View plan <span aria-hidden="true">↗</span></a>
             </div>
             <div class="status-item">
-              <h3>L1–L3 verified <time datetime="2026-11-13">2026-11-13</time></h3>
-              <p>The local API authenticates callers, creates, retrieves and lists in-memory session metadata, and lists configured model IDs.</p>
+              <h3>L1–L3, L4-1 to L4-3 verified <time datetime="2026-11-20">2026-11-20</time></h3>
+              <p>The local API authenticates callers and manages in-memory session metadata. Turn states, allowed transitions and duplicate-request checks pass their tests.</p>
             </div>
             <div class="status-item">
-              <h3><a href="#prototype">Next milestone · L4</a></h3>
-              <p>Use simulated models to test A → B → A with full history in one session. Quality and token savings remain unmeasured.</p>
+              <h3><a href="#prototype">Next milestone · L4-4</a></h3>
+              <p>Admit concurrent requests atomically, then use simulated models to test A → B → A in one session. Quality and token savings remain unmeasured.</p>
             </div>
           </aside>
         </div>
@@ -172,7 +172,7 @@
             <p class="eyebrow">03 / SELECTED DESIGN</p>
             <h2>Selected architecture</h2>
           </div>
-          <p>Start with one Go process. Add local inference and durable storage after the switching test, then connect memory.</p>
+          <p>One local HTTP API serves every client. Verify it from the command line first, then add the research UI after a security review.</p>
         </div>
         <div class="research-grid">
           <article>
@@ -189,6 +189,21 @@
             <span class="number">03</span>
             <h3>Python + Mem0 OSS</h3>
             <p>The proposed worker will derive and retrieve memory within each user’s scope and link it back to the original messages.</p>
+          </article>
+          <article>
+            <span class="number">04</span>
+            <h3>Command line and other programs</h3>
+            <p>A planned CLI maps each command to one API route. Programs in any language can call the same HTTP and JSON contract.</p>
+          </article>
+          <article>
+            <span class="number">05</span>
+            <h3>Layered safeguards</h3>
+            <p>Proposed controls cover per-caller tokens, rate limits, audit logs, stored data and prompt injection. Each needs a passing test before it counts as a protection.</p>
+          </article>
+          <article>
+            <span class="number">06</span>
+            <h3>Research UI, later</h3>
+            <p>A React interface is planned once the API is verified. It will reuse the same contract and add browser safeguards.</p>
           </article>
         </div>
         <details class="diagram">

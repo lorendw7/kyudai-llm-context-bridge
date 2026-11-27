@@ -51,12 +51,12 @@
               <a href="https://github.com/lorendw7/kyudai-llm-context-bridge/blob/main/PLAN.md">計画を見る <span aria-hidden="true">↗</span></a>
             </div>
             <div class="status-item">
-              <h3>L1–L3 検証済み <time datetime="2026-11-13">2026-11-13</time></h3>
-              <p>ローカルAPIで認証、メモリ内のセッション情報の作成・取得・一覧、設定済みモデルIDの一覧を確認しました。</p>
+              <h3>L1–L3、L4-1〜L4-3 検証済み <time datetime="2026-11-20">2026-11-20</time></h3>
+              <p>ローカルAPIは呼び出し側を認証し、メモリ内のセッション情報を管理します。ターンの状態、許される遷移、重複要求の判定はテストを通過しています。</p>
             </div>
             <div class="status-item">
-              <h3><a href="#prototype">次の到達点（L4）</a></h3>
-              <p>テスト用の模擬モデルで、同じセッションの全履歴を使った A → B → A を検証します。品質とトークン削減量は未測定です。</p>
+              <h3><a href="#prototype">次の到達点（L4-4）</a></h3>
+              <p>同時に届いた要求を原子的に受理し、その後、模擬モデルで同じセッションの A → B → A を検証します。品質とトークン削減量は未測定です。</p>
             </div>
           </aside>
         </div>
@@ -172,7 +172,7 @@
             <p class="eyebrow">03 / SELECTED DESIGN</p>
             <h2>選択した構成</h2>
           </div>
-          <p>まず単一のGoプロセスで切り替えを検証します。その後、ローカル推論と永続保存を追加し、記憶を連携します。</p>
+          <p>一つのローカルHTTP APIをすべての利用側が呼びます。まずコマンドラインで検証し、安全性の点検の後に研究UIを加えます。</p>
         </div>
         <div class="research-grid">
           <article>
@@ -189,6 +189,21 @@
             <span class="number">03</span>
             <h3>Python + Mem0 OSS</h3>
             <p>利用者ごとに範囲を分けて記憶を抽出・検索し、元のメッセージをたどれるようにする処理を提案しています。</p>
+          </article>
+          <article>
+            <span class="number">04</span>
+            <h3>コマンドラインと他のプログラム</h3>
+            <p>計画中のCLIは、一つのコマンドを一つのAPIルートに対応させます。どの言語のプログラムも、同じHTTPとJSONの契約を呼び出せます。</p>
+          </article>
+          <article>
+            <span class="number">05</span>
+            <h3>層ごとの安全対策</h3>
+            <p>呼び出し側ごとのトークン、レート制限、監査ログ、保存データ、プロンプトインジェクションへの対策を提案しています。テストを通過するまで、保護とは扱いません。</p>
+          </article>
+          <article>
+            <span class="number">06</span>
+            <h3>研究UIは検証の後</h3>
+            <p>APIの検証が終わってからReactの画面を加える計画です。同じ契約を使い、ブラウザ向けの安全対策を追加します。</p>
           </article>
         </div>
         <details class="diagram">
