@@ -67,6 +67,12 @@ Do not use one ambiguous revision value. The following are semantic roles and ca
 
 Deletion does not complete merely by advancing Go's epoch. The worker must persist the invalidation boundary, coordinate concurrent operations and verify removal from all derived stores before Go confirms `deleted`. A value a client uses to discard stale responses is local only; it never replaces server authorization or deletion epochs.
 
+<a id="source-order"></a>
+
+**原文版と会話順（2026-11-27に利用者が決定） / Source revision and conversation order (decided by the user on 2026-11-27).** `Session.Revision` は原文版です。作成時は1で、user・assistantのmessageを1件追記するたびに1増えます。失敗・取消のturnが残したuser messageも数えます。会話順は、storeが排他区間の中で採番するsession内の単調増加の連番で表します。時刻は表示用で、順序の判定に使いません。messageの連番は、その追記で進んだ後の原文版と同じ値にする案で、実装の形はL4-4で確定します。
+
+`Session.Revision` is the source revision. It is 1 at creation and advances by one for every appended user or assistant message, including user messages left by failed or cancelled turns. Conversation order is a monotonically increasing per-session sequence number assigned by the store inside its critical section. Timestamps are for display and never decide order. The proposal is that a message's sequence number equals the source revision reached by that append; L4-4 settles the implementation shape.
+
 ## Native API案 / Proposed native API
 
 | Route | 意味 / Meaning |
