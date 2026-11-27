@@ -63,9 +63,9 @@ Do not use one ambiguous revision value. The following are semantic roles and ca
 | 失効世代 / `session_epoch` | Goが削除開始時に進めて永続化。worker operationは受付時とcommit前に世代を照合し、古いwriteを拒否 / Go advances and persists it when deletion starts; worker operations check the epoch on admission and before commit, rejecting stale writes |
 | 記憶の版と適用範囲 / `memory_revision`, `applied_source_revision` | workerがrecordの更新版と反映済み原文版を区別して永続化。scope・session世代と共に返す。出典のID一覧を代替しない / Worker persists both the memory-record version and applied-source revision, returning them with scope/session epoch; these do not replace source ID lists |
 
-削除はGoの世代更新だけでは完了しません。workerが永続的な失効境界を受理し、進行中operationとの競合を制御して全派生storeを除去した証拠を返した後、Goが `deleted` を確定します。browserのrequest世代は遅い描画を防ぐlocal値であり、server認可や削除世代の代用にはしません。
+削除はGoの世代更新だけでは完了しません。workerが永続的な失効境界を受理し、進行中operationとの競合を制御して全派生storeを除去した証拠を返した後、Goが `deleted` を確定します。client側で古い応答を捨てるための値は手元だけの値であり、server認可や削除世代の代用にはしません。
 
-Deletion does not complete merely by advancing Go's epoch. The worker must persist the invalidation boundary, coordinate concurrent operations and verify removal from all derived stores before Go confirms `deleted`. A browser request epoch only guards against stale rendering; it never replaces server authorization or deletion epochs.
+Deletion does not complete merely by advancing Go's epoch. The worker must persist the invalidation boundary, coordinate concurrent operations and verify removal from all derived stores before Go confirms `deleted`. A value a client uses to discard stale responses is local only; it never replaces server authorization or deletion epochs.
 
 ## Native API案 / Proposed native API
 
@@ -95,9 +95,9 @@ The initial message API is a non-streaming job API. For a newly accepted request
 
 ### 再読込とexportの応答案 / Proposed reload and export responses
 
-**再読込（S1から） / Reload (from S1).** Chatが `view=conversation` を指定した時に、metadata、会話順のturn（要求ID・要求model・状態・message参照）、対応するmessageを同じsnapshotで返す案です。進行中や回復待ちのturnも返します。ブラウザが送信応答と手元のIDを失っても、受理済みのturnをこの一覧から照会できます。受理の記録を確認できない間は自動送信せず、状態を再読込します。別所有者には従来通り不存在と同じ404を返します。既定の4項目は[既存のGETテスト](../cmd/bridge/session_get_http_test.go)で検証します。
+**再読込（S1から） / Reload (from S1).** CLIの `session show --conversation` が `view=conversation` を指定した時に、metadata、会話順のturn（要求ID・要求model・状態・message参照）、対応するmessageを同じsnapshotで返す案です。進行中や回復待ちのturnも返します。CLIが送信応答と手元のIDを失っても、受理済みのturnをこの一覧から照会できます。受理の記録を確認できない間は自動送信せず、状態を再読込します。別所有者には従来通り不存在と同じ404を返します。既定の4項目は[既存のGETテスト](../cmd/bridge/session_get_http_test.go)で検証します。
 
-When Chat requests `view=conversation`, return metadata, turns in conversation order (request ID, requested model, state and message references) and their messages in one snapshot. Include active turns and those awaiting recovery. A browser that lost both the submission response and its local ID can find admitted work in this list and query it. While admission is uncertain, refresh status without automatically submitting. Foreign sessions retain the same 404 as missing sessions. The [existing GET test](../cmd/bridge/session_get_http_test.go) checks the four-field default.
+When the CLI's `session show --conversation` requests `view=conversation`, return metadata, turns in conversation order (request ID, requested model, state and message references) and their messages in one snapshot. Include active turns and those awaiting recovery. A CLI user who lost both the submission response and the request ID can find admitted work in this list and query it. While admission is uncertain, refresh status without automatically submitting. Foreign sessions retain the same 404 as missing sessions. The [existing GET test](../cmd/bridge/session_get_http_test.go) checks the four-field default.
 
 **Exportと削除（S3） / Export and deletion (S3).** 完全exportは一つの所有sessionの正本snapshotと、同じ世代でその時点までに必要な記憶更新を反映した出典を含みます。全履歴では派生記憶は不要です。例として、12日から15日への訂正が記憶更新待ちなら409を返し、回復後に再取得します。workerが利用不能なら503です。Goは応答確定直前に所有scope・世代と対象版を再照合し、途中で削除が始まった場合は本文を返しません。削除完了は管理対象storeに適用され、既に利用者が保存したexportは手元に残ります。
 
@@ -114,9 +114,9 @@ A complete export includes one owned session’s source snapshot and provenance 
 }
 ```
 
-UIからの `user_id`, `lab_id`, `system`, 過去assistant messageを正本として受理しません。設定した長さ上限を超えた入力、未知model、不正role、未知の重要fieldは明示拒否します。public API schemaとworker schemaは別versionで管理します。
+clientからの `user_id`, `lab_id`, `system`, 過去assistant messageを正本として受理しません。設定した長さ上限を超えた入力、未知model、不正role、未知の重要fieldは明示拒否します。public API schemaとworker schemaは別versionで管理します。
 
-Do not accept UI-supplied user_id/lab_id, system instructions or past assistant messages as authoritative records. Explicitly reject excessive input, unknown models, invalid roles and unknown critical fields. Public and worker schemas have separate versions.
+Do not accept client-supplied user_id/lab_id, system instructions or past assistant messages as authoritative records. Explicitly reject excessive input, unknown models, invalid roles and unknown critical fields. Public and worker schemas have separate versions.
 
 <a id="turn-states"></a>
 
@@ -163,9 +163,9 @@ Commit the move to `generating` before dispatching to the model. Commit the answ
 | `generating`、保存回答なし / No committed answer | `recovery_required` にして次送信を保留。照合しても結果を確定できない場合、所有者は既存reconcile操作で「回答なしで終了」を選べる。正本の回答が依然なく同じturnが回復待ちの場合だけ原子的に `failed` とし、実行結果不明の理由を残す。旧turnは再開せず、遅い結果を書き込ませない。その後の再試行は新IDで明示送信 / Hold new sends in `recovery_required`. If reconciliation cannot resolve the outcome, the owner may explicitly close the turn without an answer via reconcile. Atomically require that the same turn still awaits recovery and has no committed answer. Mark it `failed`, retain the unknown execution outcome and reject late writes to that turn. Any subsequent retry is an explicit new request ID |
 | 全履歴の `answer_saved` または `complete` / Full-history saved or complete | 保存回答を同じIDで返し、必要なら `answer_saved → complete` を確定。追加の推論は0回。派生記憶のある方式では未完了の記憶更新だけを照合（S3） / Return the committed answer under the same ID and finish `answer_saved → complete` if needed. Zero additional generations. For a policy with derived memory, reconcile outstanding memory work separately in S3 |
 
-error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、UIはcodeを日英へ翻訳します。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。現行の実装はこのほかに、4096 bytes超のbodyへ413、routeにないmethodへ405、内部の生成・encode失敗へ500を返します。
+error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、CLIはcodeをそのまま表示して[終了code](cli.md)に対応付けます。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。現行の実装はこのほかに、4096 bytes超のbodyへ413、routeにないmethodへ405、内部の生成・encode失敗へ500を返します。
 
-The error envelope carries code, request_id, retryable and state; the UI translates codes into JA/EN. Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state. The current implementation also returns 413 for bodies over 4096 bytes, 405 for methods a route does not define and 500 for internal generation or encoding failures.
+The error envelope carries code, request_id, retryable and state; the CLI prints the code unchanged and maps it to an [exit code](cli.md). Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state. The current implementation also returns 413 for bodies over 4096 bytes, 405 for methods a route does not define and 500 for internal generation or encoding failures.
 
 <a id="l4-turn-design"></a>
 
@@ -224,10 +224,10 @@ Replaying the same scope, operation ID and payload returns recorded state; a dif
 
 ## versionと検証 / Versions and verification
 
-API schema、DB migration、worker protocol、policy、metricsには独立versionを付けます。追加fieldには互換性規則、削除や意味変更には新versionを定義します。TypeScript型だけでは実HTTP応答を検証できないため、境界の実行時検証とcontract fixtureも必要です。L2で受入済みの契約はGoのDTOとinterfaceです。OpenAPIなどの機械可読schemaは、今後のHTTP API実装に合わせて本人が維持する提案であり、作成済みの成果物ではありません。
+API schema、DB migration、worker protocol、policy、metricsには独立versionを付けます。追加fieldには互換性規則、削除や意味変更には新versionを定義します。client側の型定義だけでは実HTTP応答を検証できないため、境界の実行時検証とcontract fixtureも必要です。L2で受入済みの契約はGoのDTOとinterfaceです。OpenAPIなどの機械可読schemaは、今後のHTTP API実装に合わせて本人が維持する提案であり、作成済みの成果物ではありません。
 
-Version API schemas, DB migrations, worker protocol, policies and metrics independently. Define compatibility for additive fields and new versions for removals/semantic changes. TypeScript types do not validate real HTTP responses, so runtime boundary validation and contract fixtures are also required. L2 accepted the Go DTO and interface contracts. A machine-readable schema such as OpenAPI is proposed for the user to maintain alongside future HTTP API implementation; it is not an existing deliverable.
+Version API schemas, DB migrations, worker protocol, policies and metrics independently. Define compatibility for additive fields and new versions for removals/semantic changes. Client-side type definitions do not validate real HTTP responses, so runtime boundary validation and contract fixtures are also required. L2 accepted the Go DTO and interface contracts. A machine-readable schema such as OpenAPI is proposed for the user to maintain alongside future HTTP API implementation; it is not an existing deliverable.
 
-互換追加は、旧consumerが無視できる任意response fieldに限定します。未知の重要request fieldは拒否し、新必須field、enum値、stateの意味の変更を自動的に互換としません。UIが未知stateを受け取った場合は非互換を明示し、送信を止めます。HTTP・worker・UIのfixtureで同じ用語を確認します。
+互換追加は、旧consumerが無視できる任意response fieldに限定します。未知の重要request fieldは拒否し、新必須field、enum値、stateの意味の変更を自動的に互換としません。CLIが未知stateを受け取った場合は非互換を明示し、送信を止めます。HTTP・worker・clientのfixtureで同じ用語を確認します。
 
-Compatible additions are optional response fields that older consumers can ignore. Reject unknown critical request fields, and do not assume new required fields, enum values or state meanings are compatible. A UI receiving an unknown state reports incompatibility and blocks sending. HTTP, worker and UI fixtures verify shared terminology.
+Compatible additions are optional response fields that older consumers can ignore. Reject unknown critical request fields, and do not assume new required fields, enum values or state meanings are compatible. A CLI receiving an unknown state reports incompatibility and blocks sending. HTTP, worker and client fixtures verify shared terminology.

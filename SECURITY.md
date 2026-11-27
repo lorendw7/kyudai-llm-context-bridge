@@ -1,8 +1,8 @@
 # セキュリティと機密情報 / Security and sensitive data
 
-現在は研究原型の準備段階です。hosted LLM service、認証system、model API、React研究UIはまだありません。既存static siteは固定の合成textだけを使用し、modelを呼び出しません。
+現在は研究原型の準備段階です。hosted LLM serviceと実modelを呼ぶAPIはまだありません。人が使う入口は計画中のCLIで、研究用の画面は作りません。既存static siteは固定の合成textだけを使用し、modelを呼び出しません。
 
-The project is preparing a research prototype. It does not yet provide a hosted LLM service, authentication system, model API or React research UI. The existing static site uses fixed synthetic text and makes no model calls.
+The project is preparing a research prototype. It does not yet provide a hosted LLM service or an API that calls real models. The human entry point is a planned CLI; no research screen will be built. The existing static site uses fixed synthetic text and makes no model calls.
 
 ## 報告 / Reporting
 
@@ -16,9 +16,9 @@ Do not post credentials, private conversations, personal information or exploita
 
 Authentication, ownership checks, local-only provider configuration and deletion verification are design/contract requirements, not implemented protections. Loopback does not isolate other processes on a host. Raw model APIs, workers and DB files also require protection.
 
-UIのbuild変数、localStorage、console logに秘密を保存しません。model出力と検索memoryは信頼できないtextです。export、backup、WAL、test trace、browser screenshotも本文を含み得るため、初期検証は合成dataに限定します。
+tokenをcommandの引数、設定file、logに置きません。引数はprocess一覧とshell履歴に残ります。model出力と検索memoryは信頼できないtextです。export、backup、WAL、test trace、shell履歴、端末のlogも本文を含み得るため、初期検証は合成dataに限定します。
 
-Do not store secrets in UI build variables, localStorage or console logs. Model output and retrieved memory are untrusted text. Exports, backups, WAL, test traces and browser screenshots can contain content; initial checks use synthetic data only.
+Do not put tokens in command arguments, config files or logs. Arguments appear in process listings and shell history. Model output and retrieved memory are untrusted text. Exports, backups, WAL, test traces, shell history and terminal logs can contain content; initial checks use synthetic data only.
 
 credentialを誤公開した場合、発行元で失効させます。最新fileから消してもGit履歴からは消えません。削除後のbackup restoreでdataを復活させないよう、削除記録と保持範囲を管理します。ignore規則はstageと履歴のreviewを代替しません。
 

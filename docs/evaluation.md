@@ -26,9 +26,9 @@ Match answer-model switch order, model/tokenizer/template, helper/embedder, gene
 
 The primary evaluation uses real sessions with fixed user scripts. Generated answers enter each policy's own history, so later inputs are not identical. Evaluate the end-to-end conversation difference without claiming an effect under identical prompts. A context-only diagnostic using identical source prefixes is a separate secondary experiment and must not be pooled.
 
-段階的な実装では、S1の [合成fixture](contracts.md#l4-turn-design) は画面を介さずにmodel選択、訂正を含む履歴、状態を検証します。S2の実モデルsmokeでは同じ切替順でAPIと保存・再読込を確認します。後続runnerは研究UIと同じ `/v1` APIを使い、run/turn ID、要求modelと実行modelの識別子、終端状態、欠測理由をmanifestまたは結果に対応付けます。研究上の比較には、freeze済み条件で実行した評価runを使います。
+段階的な実装では、S1の [合成fixture](contracts.md#l4-turn-design) は画面を介さずにmodel選択、訂正を含む履歴、状態を検証します。S2の実モデルsmokeでは同じ切替順でAPIと保存・再読込を確認します。後続runnerはCLIと同じ `/v1` APIとclient packageを使い、run/turn ID、要求modelと実行modelの識別子、終端状態、欠測理由をmanifestまたは結果に対応付けます。研究上の比較には、freeze済み条件で実行した評価runを使います。
 
-Under incremental implementation, the S1 [synthetic fixture](contracts.md#l4-turn-design) verifies model selection, history with corrections and state without a UI. The S2 real-model smoke test checks the API, storage and reload using the same switch order. The later runner uses the same `/v1` API as the research UI and ties run/turn IDs, requested and executed model identities, terminal states and reasons for missing observations to the manifest or results. Research comparisons use evaluation runs under frozen conditions.
+Under incremental implementation, the S1 [synthetic fixture](contracts.md#l4-turn-design) verifies model selection, history with corrections and state without a UI. The S2 real-model smoke test checks the API, storage and reload using the same switch order. The later runner uses the same `/v1` API and client package as the CLI and ties run/turn IDs, requested and executed model identities, terminal states and reasons for missing observations to the manifest or results. Research comparisons use evaluation runs under frozen conditions.
 
 ## ケースと採点 / Cases and scoring
 
@@ -85,9 +85,9 @@ Proposed targets are quality ≥90%, degradation ≤5 percentage points versus f
 
 After authorization, verify entitlement, modules, drivers, private storage, the GPU platform's OSS boundary and network/job isolation. Official documentation describes PJM and Singularity. Match packaging to the actual environment and avoid runtime installs/downloads. [PJM](https://www.cc.kyushu-u.ac.jp/scp/usage/job/), [Singularity](https://www.cc.kyushu-u.ac.jp/scp/system/genkai/software/Singularity/) (accessed 2026-11-08).
 
-Go、worker、Ollama、runnerを一つの割当job内で実行し、研究UIは不要です。最初は1 GPU、smoke 30分・開発pilot 60分を上限案とし、本評価枠は実測から決めます。loopbackだけでは同一hostの他jobを隔離できず、raw Ollama endpointの保護も必要です。
+Go、worker、Ollama、runnerを一つの割当job内で実行します。画面は不要です。最初は1 GPU、smoke 30分・開発pilot 60分を上限案とし、本評価枠は実測から決めます。loopbackだけでは同一hostの他jobを隔離できず、raw Ollama endpointの保護も必要です。
 
-Run Go, worker, Ollama and runner in one allocated job; the UI is unnecessary. Proposed initial caps are one GPU, 30-minute smoke and 60-minute development pilot; size final allocation from measurements. Loopback alone does not isolate other jobs on a host, and raw Ollama endpoints also require protection.
+Run Go, worker, Ollama and runner in one allocated job; no screen is involved. Proposed initial caps are one GPU, 30-minute smoke and 60-minute development pilot; size final allocation from measurements. Loopback alone does not isolate other jobs on a host, and raw Ollama endpoints also require protection.
 
 node-local DBは整合したbackupをprivate永続storageへ保存します。稼働中DB fileの単純copyをcheckpointにせず、job終了時のlocal storage消失を前提に途中保存します。job wrapperはreadiness、timeout、失敗記録、自分の子processだけの終了を管理します。
 
