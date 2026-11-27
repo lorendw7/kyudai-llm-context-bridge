@@ -70,6 +70,9 @@ type Message struct {
 	Role      MessageRole
 	Content   string
 	CreatedAt time.Time
+	// Sequence is the per-session conversation order assigned by the store.
+	// It is zero until the store appends the message.
+	Sequence uint64
 }
 
 func NewMessage(
