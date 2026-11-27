@@ -6,13 +6,13 @@ To resume after L3, start with the [exercise on B’s reply and turn state](#l4-
 
 ## 分担 / Ownership
 
-利用者は研究の核心codeを書きます。対象は状態・並行実行・保存の原子操作・回復・context policy・記憶の調停・CLIの送信後の待機と回復・再生と集計など、設計判断を含む部分です。assistantはその判断をcodeへ写す外周を書きます。対象はHTTP handlerとDTO変換、error envelope、起動と停止、設定読込、migration実行の枠組み、workerのHTTP外殻、CLIのcommandの枠組みと表示、runnerのCLI、job wrapperです。assistantはこのほかtests、synthetic fixtures、test-only fakes、verification harnessesを実装し、指導・code review・依頼された日英文書を担当します。testが失敗したら、そのcodeの担当者が直します。本人のcodeならassistantが原因と修正方針を説明し、本人が直します。依存の選定と導入許可は本人が行います。2026-11-19に利用者が決めた分担です。
+利用者は研究の核心codeを書きます。対象は状態・並行実行・保存の原子操作・回復・context policy・記憶の調停・認証と濫用対策の方針・CLIとUIの状態処理・再生と集計など、設計判断を含む部分です。assistantはその判断をcodeへ写す外周を書きます。対象はHTTP handlerとDTO変換、error envelope、起動と停止、設定読込、migration実行の枠組み、workerのHTTP外殻、CLIのcommandの枠組みと表示、UIの画面構成と文言、runnerのCLI、job wrapperです。assistantはこのほかtests、synthetic fixtures、test-only fakes、verification harnessesを実装し、指導・code review・依頼された日英文書を担当します。testが失敗したら、そのcodeの担当者が直します。本人のcodeならassistantが原因と修正方針を説明し、本人が直します。依存の選定と導入許可は本人が行います。2026-11-19に利用者が決めた分担です。
 
-The user writes the core research code: the parts that carry design decisions, such as state, concurrency, atomic storage operations, recovery, context policies, memory reconciliation, waiting and recovery after a CLI send, replay and aggregation. The assistant writes the surrounding code that translates those decisions: HTTP handlers and DTO mapping, the error envelope, startup and shutdown, configuration loading, the migration runner, the worker HTTP shell, the CLI command framework and output, the runner CLI and job wrappers. The assistant also implements tests, synthetic fixtures, test-only fakes and verification harnesses, and provides teaching, code review and requested bilingual docs. When tests fail, the author of that code fixes it. For user-written code, the assistant explains the cause and repair direction and the user makes the fix. The user selects dependencies and approves installation. The user set this division on 2026-11-19.
+The user writes the core research code: the parts that carry design decisions, such as state, concurrency, atomic storage operations, recovery, context policies, memory reconciliation, authentication and abuse-control policy, CLI and UI state handling, replay and aggregation. The assistant writes the surrounding code that translates those decisions: HTTP handlers and DTO mapping, the error envelope, startup and shutdown, configuration loading, the migration runner, the worker HTTP shell, the CLI command framework and output, UI layout and copy, the runner CLI and job wrappers. The assistant also implements tests, synthetic fixtures, test-only fakes and verification harnesses, and provides teaching, code review and requested bilingual docs. When tests fail, the author of that code fixes it. For user-written code, the assistant explains the cause and repair direction and the user makes the fix. The user selects dependencies and approves installation. The user set this division on 2026-11-19.
 
-公開 `website/` と美術素材は2026-11-12からassistantの担当で、HTML・CSS・JavaScript、説明図、表示検証を含みます。研究用の画面は2026-11-27に計画から外し、人が使う入口は[CLI](docs/cli.md)です。
+公開 `website/` と美術素材は2026-11-12からassistantの担当で、HTML・CSS・JavaScript、説明図、表示検証を含みます。研究UI `web/` はCLIとAPIの検証の後に加え、Mantineを使い独自CSSを書かない方針を維持します。
 
-The assistant has owned public `website/` and visual assets since 2026-11-12, including HTML, CSS, JavaScript, explanatory graphics and display verification. The research screen left the plan on 2026-11-27; the human entry point is the [CLI](docs/cli.md).
+The assistant has owned public `website/` and visual assets since 2026-11-12, including HTML, CSS, JavaScript, explanatory graphics and display verification. Research UI `web/` is added after CLI and API verification and keeps Mantine without handwritten CSS.
 
 <a id="lesson-method"></a>
 
@@ -95,15 +95,17 @@ Run each row independently from the same starting conditions. Record request IDs
 | 種類 / Level | 対象 / Scope | 証明しないもの / Does not establish |
 | --- | --- | --- |
 | Unit / 単体 | 純粋domain、policy budget、状態遷移 / Pure domain, policy budget and state transitions | 実model品質 / Real-model quality |
-| Contract / 契約 | Go HTTP、worker、client DTO、fake外部応答 / Go HTTP, worker, client DTOs and fake external responses | vendor互換性の実測 / Measured vendor compatibility |
+| Contract / 契約 | Go HTTP、worker、UI DTO、fake外部応答 / Go HTTP, worker, UI DTOs and fake external responses | vendor互換性の実測 / Measured vendor compatibility |
 | Integration / 連携 | 許可済みSQLite、Ollama、Mem0、遮断network / Authorized SQLite/Ollama/Mem0 and blocked outbound network | 任意環境での再現 / Reproduction on every environment |
 | CLI | 終了code、stdoutとstderr、`--json`、日本語の入出力、中断と再送 / Exit codes, stdout and stderr, `--json`, Japanese input/output, interruption and replay | backend認可の正しさ / Correct backend authorization |
-| E2E | buildしたbinaryでの認証、同session切替、訂正、回復、削除 / Authentication, same-session switching, correction, recovery and deletion | 最終研究結果 / Final research results |
+| Security / 安全 | 認証と所有者の全組合せ、不正入力とfuzz、濫用の上限、logに秘密がないこと、注入された指示の隔離 / Every authentication and ownership combination, invalid input and fuzzing, abuse limits, no secrets in logs and containment of injected instructions | 未知の攻撃への安全、認証機関による評価 / Safety against unknown attacks or any certified assessment |
+| UI / 画面 | component、利用者操作、日英、focus、IME、失敗 / Components, user actions, JA/EN, focus, IME and failures | backend認可の正しさ / Correct backend authorization |
+| E2E | login相当、同session切替、訂正、回復、削除 / Authentication, same-session switching, correction, recovery and deletion | 最終研究結果 / Final research results |
 | Evaluation / 研究評価 | frozen cases、rubric、cost accounting / Frozen cases, rubric and cost accounting | 未試験集団への一般化 / Generalization to untested populations |
 
-失敗・未実行・skipを明記します。test依存も導入許可の対象です。開発fixtureと最終評価caseを混ぜません。内部の構造より、利用者に見える動作と契約を検証します。
+失敗・未実行・skipを明記します。test依存とbrowser binaryも導入許可の対象です。開発fixtureと最終評価caseを混ぜません。state classやcomponent内部構造より、利用者に見える動作と契約を検証します。
 
-Report failures, unexecuted checks and skips. Test dependencies also require installation authorization. Keep development fixtures separate from final cases. Test observable behavior and contracts instead of internal structure.
+Report failures, unexecuted checks and skips. Test dependencies/browser binaries also require installation authorization. Keep development fixtures separate from final cases. Test observable behavior/contracts instead of private component structure or styling classes.
 
 ## 現在使える確認 / Available checks
 
@@ -114,19 +116,19 @@ gofmt -l cmd/bridge
 go test ./... -v -count=1
 ```
 
-現在のGo scaffoldにmodelやmemory packageは不要です。CLIはまだ存在せず、そのchecksは実装に合わせて追加します。
+現在のGo scaffoldにmodelやmemory packageは不要です。上記はReact typecheck/build/E2Eを実行しません。CLIとReact projectはまだ存在せず、将来のchecksは本人の実装と依存許可後に追加します。
 
-The current Go scaffold requires no model/memory packages. The CLI does not exist yet; add its checks alongside the implementation.
+The current Go scaffold requires no model/memory packages. These commands do not run React type checks, builds or E2E. Neither the CLI nor the React project exists yet; add those checks after user implementation and dependency authorization.
 
 ## 文書・公開 / Documentation and publication
 
-日本語と英語を節単位で対応させ、片方だけの要約にしません。識別子とcommandsは共通、standard LICENSE原文は保持します。architecture、contract、CLI、evaluation、sourceの説明を各正本文書に置き、READMEは案内にします。別のroadmapやhistorical report集を増やしません。
+日本語と英語を節単位で対応させ、片方だけの要約にしません。識別子とcommandsは共通、standard LICENSE原文は保持します。architecture、contract、CLI、UI、evaluation、sourceの説明を各正本文書に置き、READMEは案内にします。別のroadmapやhistorical report集を増やしません。
 
-Pair Japanese and English by section, rather than providing only a shortened translation. Identifiers/commands are shared; preserve the standard LICENSE text. Keep architecture, contracts, CLI, evaluation and sources in their reference documents; README is the entry point. Do not add parallel roadmaps or historical-report collections.
+Pair Japanese and English by section, rather than providing only a shortened translation. Identifiers/commands are shared; preserve the standard LICENSE text. Keep architecture, contracts, CLI, UI, evaluation and sources in their reference documents; README is the entry point. Do not add parallel roadmaps or historical-report collections.
 
-通常の公開はfocused branchとdiff確認を使い、明示されたmain更新・履歴置換の指示がある場合はそれに従います。無関係の変更を保持し、実行したcheckだけを報告します。現在のwebsiteはbuild不要の説明用siteで、研究APIには接続しません。2026-11-12以降はassistantがwebsiteのcode・素材・文言・link・keyboard・狭幅／広幅・合成3段階を担当します。
+通常の公開はfocused branchとdiff確認を使い、明示されたmain更新・履歴置換の指示がある場合はそれに従います。無関係の変更を保持し、実行したcheckだけを報告します。現在のwebsiteはbuild不要の説明用siteで、研究UIとは別です。2026-11-12以降はassistantがwebsiteのcode・素材・文言・link・keyboard・狭幅／広幅・合成3段階を担当します。
 
-For ordinary publication, use a focused branch and review diffs; explicit main-update/history-replacement instructions take precedence. Preserve unrelated changes and report only executed checks. The existing buildless public website does not connect to the research API. Since 2026-11-12, the assistant owns website code, assets, wording, links, keyboard/narrow/wide behavior and the three synthetic stages.
+For ordinary publication, use a focused branch and review diffs; explicit main-update/history-replacement instructions take precedence. Preserve unrelated changes and report only executed checks. The existing buildless public website is separate from the research UI. Since 2026-11-12, the assistant owns website code, assets, wording, links, keyboard/narrow/wide behavior and the three synthetic stages.
 
 private chats、credential、weights、DB、raw output、発表archiveをGitへ入れません。ignoreだけに頼らずstage内容を確認します。projectの原著作物は[MIT](LICENSE)、第三者資料は元licenseに従い、大学公認を示唆しません。
 

@@ -1,14 +1,14 @@
 # 視覚設計と素材 / Visual design and assets
 
-更新 / Updated: 2026-11-27 (Asia/Tokyo)。公開websiteと説明素材の設計資料です。研究用の画面は2026-11-27に計画から外しました（[CLI設計](cli.md)）。作業と検証記録は[PLAN.md](../PLAN.md)を参照します。図は設計案・合成例であり、実装画面や研究結果ではありません。
+更新 / Updated: 2026-11-12 (Asia/Tokyo)。公開websiteと説明素材の設計資料です。研究UIの実装仕様は[ui.md](ui.md)、作業と検証記録は[PLAN.md](../PLAN.md)を参照します。図は設計案・合成例であり、実装画面や研究結果ではありません。
 
-This reference covers the public website and explanatory assets. The research screen left the plan on 2026-11-27 (see the [CLI design](cli.md)). Actions and validation records belong in [PLAN.md](../PLAN.md). Diagrams are proposals and synthetic examples, not product screenshots or research results.
+This reference covers the public website and explanatory assets. Research UI behavior belongs in [ui.md](ui.md); actions and validation records belong in [PLAN.md](../PLAN.md). Diagrams are proposals and synthetic examples, not product screenshots or research results.
 
 ## 素材が必要な理由 / Why use visual assets
 
-本projectに必要なのは、モデル切替と、正本と派生記憶の関係を説明する少数の図です。既存の橋形markと説明用SVGを保持し、公開websiteには暖白のcanvasと白い重点面を使います。写真・人物・吉祥物・大学logoは必要ありません。背景画像・外部font・icon packageを追加せず、SVGを編集可能な原本として保持します。
+本projectに必要なのは、モデル切替、正本と派生記憶、画面内の情報階層を説明する少数の図です。既存の橋形markと説明用SVGを保持し、公開websiteには暖白のcanvasと白い重点面を使います。写真・人物・吉祥物・大学logoは必要ありません。背景画像・外部font・icon packageを追加せず、SVGを編集可能な原本として保持します。
 
-The useful assets explain model switching and authoritative messages versus derived memory. Retain the bridge mark and explanatory SVGs while using a warm-white canvas and white focal surfaces on the public website. Photos, characters, mascots and university logos are unnecessary. Keep editable SVG sources without adding background images, remote fonts or icon packages.
+The useful assets explain model switching, authoritative messages versus derived memory, and interface hierarchy. Retain the bridge mark and explanatory SVGs while using a warm-white canvas and white focal surfaces on the public website. Photos, characters, mascots and university logos are unnecessary. Keep editable SVG sources without adding background images, remote fonts or icon packages.
 
 ## 配置と責務 / Placement and ownership
 
@@ -16,11 +16,12 @@ The useful assets explain model switching and authoritative messages versus deri
 | --- | --- |
 | [website/assets/mark.svg](../website/assets/mark.svg) | 既存project mark。websiteで再利用し、大学公式markとはしない / Existing project mark, reused on the website without presenting it as an official university mark |
 | [website/assets/context-continuity.svg](../website/assets/context-continuity.svg) | 1200 × 680。日英共通のA → B → A・訂正・出典図。websiteでは必要時に開き、READMEと同じ原本を参照 / Shared JA/EN continuity, correction and provenance diagram, disclosed on demand on the website and shared with README |
+| [docs/assets/research-ui-layout.svg](assets/research-ui-layout.svg) | 1400 × 900。広幅／狭幅の研究UI配置案。ui.mdから参照し、製品screenshotとして使わない / Wide/narrow research UI layout proposal, referenced by ui.md; never label it a product screenshot |
 | `website/index.html`, `website/ja.html` | 日英の公開説明。固定合成例のみ。実研究APIへ接続しない / English/Japanese public information pages with fixed synthetic examples and no research API connection |
 
-2026-11-12の利用者指示により、公開websiteと美術素材はassistantが担当します。SVGは新しい実行依存を持たず、script・外部参照・埋込画像を含みません。研究用のGoとPythonの分担は[協働規則](../AGENTS.md)に従います。
+2026-11-12の利用者指示により、公開websiteと美術素材はassistantが担当します。SVGは新しい実行依存を持たず、script・外部参照・埋込画像を含みません。研究用Go・Python・React `web/` は本人担当です。公開siteのCSSと、研究UIのMantine／独自CSSなしの方針を混同しません。
 
-The user's 2026-11-12 instruction assigns the public website and artwork to the assistant. These SVGs add no runtime dependencies, scripts, external references or embedded images. Ownership of research Go and Python follows the [collaboration guidelines](../AGENTS.md).
+The user's 2026-11-12 instruction assigns the public website and artwork to the assistant. These SVGs add no runtime dependencies, scripts, external references or embedded images. The user retains research Go, Python and React `web/`. Public-site CSS is separate from the research UI's Mantine/no-handwritten-CSS decision.
 
 ## 参照と適用範囲 / Reference and scope
 
@@ -56,15 +57,19 @@ The header has a project-name/language row followed by a white navigation row. T
 
 The continuity diagram in the architecture section opens on demand through native HTML `details` / `summary`; the prose explains the essentials while it is closed. Preserve visible corrections, evidence labels and keyboard focus, without restoring decorative hero artwork.
 
-既存SVGの梅紫 `#7b1746`、紙色 `#f5f3ef`、線色 `#ddd7da` は原本として保持し、今回の再設計では変更しません。既存project markも保持します。図内の色はwebsiteのsection背景ではありません。
+既存SVGの梅紫 `#7b1746`、紙色 `#f5f3ef`、線色 `#ddd7da` は原本として保持し、今回の再設計では変更しません。既存project markも保持します。図内の色はwebsiteのsection背景ではありません。研究UIはdefault Mantine themeとcomponent propsを優先し、公開siteのpaletteをそのまま研究UI themeとして導入する要件にはしません。
 
-Retain the existing SVGs' plum `#7b1746`, paper `#f5f3ef` and divider `#ddd7da` colors in their unchanged sources, along with the existing project mark. Colors within artwork are not website-section backgrounds.
+Retain the existing SVGs' plum `#7b1746`, paper `#f5f3ef` and divider `#ddd7da` colors in their unchanged sources, along with the existing project mark. Colors within artwork are not website-section backgrounds. The research UI prioritizes the default Mantine theme and component props; the public-site palette does not require a matching research UI theme.
 
 ## 画像と同等の文章 / Text equivalents
 
 継続図：同じsessionと所有者・policyのままA → B → Aを切り替えます。合成例は11月12日の締切を15日に訂正し、最後のAにも15日を引き継ぐ目標です。正本message `m02` が訂正の出典で、memoryは出典とrevisionを持つ派生情報です。成功を実測した図ではありません。
 
 Continuity diagram: switch A → B → A within one session with the same owner and policy. The synthetic example corrects a November 12 deadline to November 15 and aims to carry that correction back to A. Authoritative message `m02` supplies the correction; memory is derived and carries its source and revision. The diagram does not report measured success.
+
+UI図：広幅はsession navigationと会話を並べ、出典は必要時に開きます。狭幅は一列にします。次turn用のmodelと過去回答のmodel labelを分離します。保存済み回答と `memory_pending` を同時に表示し、回復まで次の送信を止めます。図中の入力やbuttonは説明用で、操作可能な実装ではありません。
+
+UI diagram: wide layouts place sessions beside the conversation and open sources on demand; narrow layouts use one column. Separate the next-turn model from the model labels on past answers. Show a saved answer together with `memory_pending` and block the next send until recovery. Drawn fields and buttons are explanatory, not interactive implementation.
 
 説明画像には日英のtitle・descと意味のある代替textを付け、本文でも同じ情報を説明します。markが隣接するproject名を重複する場合は空のaltにします。狭幅では図を縮小するだけに依存せず、読みやすい本文と原寸画像linkを提供します。色に加えて文字を使い、keyboard focus・日本語の折返し・動きを減らす設定を維持します。
 
@@ -80,6 +85,6 @@ The assistant authored the new SVGs on 2026-11-12 using the existing project pal
 
 This palette and black-accent refinement leaves SVG sources and main-content layout unchanged and adds no images, dependencies, fonts or models. Record site changes and validation results in PLAN.md; design decisions are not evidence of measurements or completed publication.
 
-画像の値や語句を更新するときは関連本文と日英を同時に確認します。SVGの構文、外部参照の不在、実際の描画、代替text、local linkを確認します。画像の描画確認は、研究codeの動作検証やモデル評価の証拠にはなりません。
+画像の値や語句を更新するときは関連本文と日英を同時に確認します。SVGの構文、外部参照の不在、実際の描画、代替text、local linkを確認します。画像の描画確認は、研究UIの動作検証やモデル評価の証拠にはなりません。
 
-When changing labels or values, review the paired prose and both languages together. Check SVG syntax, absence of external references, actual rendering, alt text and local links. Rendering checks do not validate research behavior or model quality.
+When changing labels or values, review the paired prose and both languages together. Check SVG syntax, absence of external references, actual rendering, alt text and local links. Rendering checks do not validate research UI behavior or model quality.

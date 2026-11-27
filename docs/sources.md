@@ -9,21 +9,21 @@ Unless noted, sources were inspected on 2026-11-08. This is upstream-source rese
 | 区分 / Class | このprojectでの例 / Project example |
 | --- | --- |
 | 確認済み要件 / Confirmed requirement | OSS、本人による実装、assistantのテスト、日英文書 / OSS, user implementation, assistant tests, bilingual docs |
-| 利用者報告 / User-reported | 教員承認、玄界account・割当、「commandlineの形でAPIを提供し、UI画面は作らない」という教員の要件（2026-11-27） / Supervisor approval, Genkai account/allocation, and the supervisor's requirement of an API used from the command line with no UI screen (2026-11-27) |
-| 確認済み設計選択 / Confirmed design choice | 公開siteの暖白canvas `#FAF9F6`（利用者選択、2026-11-12） / Public-site warm-white canvas `#FAF9F6` (user choice, 2026-11-12) |
-| 設計提案 / Design proposal | SQLite、module境界、性能目標、[CLI](cli.md)のcommandと終了code / SQLite, module boundaries, performance targets, and [CLI](cli.md) commands and exit codes |
+| 利用者報告 / User-reported | 教員承認、玄界account・割当。2026-11-27：まずcommandlineとAPIで検証し、その後にUIを加えるという教員の方針、他の人のprogramからも呼べること、安全対策を強める希望 / Supervisor approval, Genkai account/allocation. On 2026-11-27: the supervisor's direction to verify through the command line and API first and add a UI afterwards, access for other people's programs, and the wish for stronger security |
+| 確認済み設計選択 / Confirmed design choice | Mantineによる研究UI（2026-11-08）、公開siteの暖白canvas `#FAF9F6`（利用者選択、2026-11-12） / Mantine for the research UI (2026-11-08); public-site warm-white canvas `#FAF9F6` (user choice, 2026-11-12) |
+| 設計提案 / Design proposal | SQLite、module境界、性能目標、[CLI](cli.md)、[安全設計](architecture.md#security) / SQLite, module boundaries, performance targets, the [CLI](cli.md) and the [security design](architecture.md#security) |
 | 上流資料・vendor claim / Upstream documentation or vendor claim | 対応provider、公開benchmark、製品説明 / Supported providers, published benchmarks and product descriptions |
 | 実測 / Measured result | 2026-11-08の初期scaffold：Go 1.26.0 Windowsで当時の2テスト成功。その後の受入は[PLAN.md](../PLAN.md)。モデル品質は未測定 / Initial scaffold snapshot on 2026-11-08: the two tests present then passed on Go 1.26.0 Windows. Subsequent acceptance is recorded in PLAN.md; model quality remains unmeasured |
 
 ## 公開デザイン素材 / Public design assets
 
-2026-11-12参照。既存projectの `website/assets/mark.svg` と当初の梅紫・紙色を基に、[継続図](../website/assets/context-continuity.svg)をassistantが編集可能なSVGとして制作しました。同時に制作した研究UI配置図は、2026-11-27の研究UI取り下げに伴って削除しました。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。websiteのpalette調整でもSVG原本は変更せず、図内の色とpage paletteを区別します。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
+2026-11-12参照。既存projectの `website/assets/mark.svg` と当初の梅紫・紙色を基に、[継続図](../website/assets/context-continuity.svg)と[研究UI配置図](assets/research-ui-layout.svg)をassistantが編集可能なSVGとして制作しました。既存markは保持し、追加の第三者画像・font・依存・画像生成modelは使っていません。websiteのpalette調整でもSVG原本は変更せず、図内の色とpage paletteを区別します。原著作物の配布条件は[MIT](../LICENSE)。用途、寸法、代替説明は[視覚設計](design.md)を参照します。
 
-Inspected 2026-11-12. The assistant authored the editable [continuity diagram](../website/assets/context-continuity.svg) using the existing `website/assets/mark.svg` and original plum/paper palette as references. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. The research UI layout figure made at the same time was deleted when the research UI was withdrawn on 2026-11-27. Website palette changes leave SVG sources unchanged, distinguishing artwork colors from the page palette. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
+Inspected 2026-11-12. The assistant authored the editable [continuity diagram](../website/assets/context-continuity.svg) and [research UI layout](assets/research-ui-layout.svg) using the existing `website/assets/mark.svg` and original plum/paper palette as references. The existing mark is retained; no additional third-party images, fonts, dependencies or image-generation models were used. Website palette changes leave SVG sources unchanged, distinguishing artwork colors from the page palette. Original project material follows [MIT](../LICENSE). See [visual design](design.md) for uses, dimensions and text equivalents.
 
-これらは設計提案・合成例です。model versionは該当なしで、実modelの応答・製品のscreenshot・benchmarkとして扱いません。外部資料の従来の参照日を今回の描画確認日で上書きしません。
+これらは設計提案・合成例です。model versionは該当なしで、実modelの応答・研究UI screenshot・benchmarkとして扱いません。外部資料の従来の参照日を今回の描画確認日で上書きしません。
 
-These are design proposals and synthetic examples. Model version is not applicable; they are neither real-model responses, product screenshots nor benchmarks. The rendering review date does not replace earlier access dates for external sources.
+These are design proposals and synthetic examples. Model version is not applicable; they are neither real-model responses, research UI screenshots nor benchmarks. The rendering review date does not replace earlier access dates for external sources.
 
 ## 公開siteの版面参照 / Public-site layout reference
 
@@ -67,11 +67,47 @@ Mem0の[OSS概要](https://docs.mem0.ai/open-source/overview)はdefaultにcloud 
 
 Mem0's [OSS overview](https://docs.mem0.ai/open-source/overview) includes cloud providers in its defaults. The [local LLM](https://docs.mem0.ai/components/llms/models/ollama) and [embedding](https://docs.mem0.ai/components/embedders/models/ollama) examples configure one side at a time; copying either alone does not establish a local-only route. Pin generation, embedding, vector/history and telemetry settings, then verify with outbound traffic blocked.
 
-## 取り下げたfrontend候補 / Withdrawn frontend candidates
+## Frontend・UI候補 / Frontend and UI candidates
 
-2026-11-27に研究UIを取り下げたため、React、TypeScript、Vite、Mantine、Ant Design、Material UI、NextChat、Open WebUI、LibreChatと、Vitest、Testing Library、Playwrightの調査行をこの台帳から外しました。いずれも導入していません。調査記録はGit履歴（`a40978e` まで）に残ります。CLIはGo標準libraryだけで作る案で、新しい依存はありません。
+以下のmain/master資料は可変snapshotです。現在表示されるversionを自動採用せず、導入時に互換versionsとlockfileを固定します。
 
-Because the research UI was withdrawn on 2026-11-27, the survey rows for React, TypeScript, Vite, Mantine, Ant Design, Material UI, NextChat, Open WebUI and LibreChat, and for Vitest, Testing Library and Playwright, were removed from this register. None was ever installed. The survey remains in Git history up to `a40978e`. The CLI is proposed on the Go standard library alone, adding no dependency.
+The main/master sources below are mutable snapshots. Do not automatically adopt displayed versions; pin compatible versions and lockfiles when installation is authorized.
+
+| 対象 / Component | 一次資料 / Primary source | 調査結論 / Survey conclusion |
+| --- | --- | --- |
+| React | [LICENSE](https://github.com/react/react/blob/main/LICENSE), [Viteによる構築 / Vite setup](https://react.dev/learn/build-a-react-app-from-scratch) | core MITを確認。構築・routing・data取得の責務はproject側 / Core MIT verified; project owns build/routing/data-fetching choices |
+| TypeScript | [LICENSE](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt), [Handbook](https://www.typescriptlang.org/docs/handbook/intro.html) | Apache-2.0確認。正確なcompiler version未固定 / Apache-2.0 verified; compiler version unpinned |
+| Vite | [LICENSE](https://github.com/vitejs/vite/blob/main/LICENSE), [guide](https://vite.dev/guide/), [env variables](https://vite.dev/guide/env-and-mode) | core MIT確認。Node要件とbundler依存は固定版で確認 / Core MIT verified; Node requirement and bundler dependencies require pinned review |
+| Mantine | [LICENSE](https://github.com/mantinedev/mantine/blob/master/LICENSE), [Vite guide](https://mantine.dev/guides/vite/), [AppShell](https://mantine.dev/core/app-shell/), [styles](https://mantine.dev/styles/styles-overview/) | 2026-11-08に選択。core MIT。独自CSSなしでdefault componentsを組み合わせる / Selected 2026-11-08. Core MIT; compose default components without custom CSS |
+| Ant Design | [LICENSE](https://github.com/ant-design/ant-design/blob/master/LICENSE), [introduction](https://ant.design/docs/react/introduce/) | core MIT。form/table中心なら代替 / Core MIT; alternative for form/table-heavy screens |
+| Material UI | [overview](https://mui.com/material-ui/getting-started/) | 部品候補として機能のみ調査。追加製品・license詳細の監査未実施、未選択 / Feature survey only; additional products/license details unaudited, not selected |
+| NextChat | commit `1d3dc331512929a4b1d3e82354e72acce33b5c7a`: [LICENSE](https://github.com/ChatGPTNextWeb/NextChat/blob/1d3dc331512929a4b1d3e82354e72acce33b5c7a/LICENSE), [README](https://github.com/ChatGPTNextWeb/NextChat/blob/1d3dc331512929a4b1d3e82354e72acce33b5c7a/README.md), [payload](https://github.com/ChatGPTNextWeb/NextChat/blob/1d3dc331512929a4b1d3e82354e72acce33b5c7a/app/client/platforms/openai.ts) | 調査時mainのcommitを記録、MIT。Bridge session bindingは別実装が必要との設計判断 / Recorded inspected main commit, MIT; Bridge session binding requires separate design/implementation |
+| Open WebUI | [LICENSE](https://github.com/open-webui/open-webui/blob/main/LICENSE), [license説明 / Explanation](https://docs.openwebui.com/license/) | 現行追加branding条件を確認。default OSSルートには未選択 / Additional current branding condition verified; not selected for default OSS route |
+| LibreChat | [LICENSE](https://github.com/LibreChat-AI/LibreChat/blob/main/LICENSE), [local stack](https://www.librechat.ai/docs/local/docker) | core MIT。default stackに複数DB等が含まれる。全依存未監査、初期UIには未選択 / Core MIT; default stack includes multiple databases; dependencies unaudited, not selected initially |
+
+Go標準test以外のVitest、Testing Library、Playwrightとbrowser binaryは後続候補です。テスト用でも実package、browser配布物、license、Node互換性を導入前に確認します。
+
+Vitest, Testing Library, Playwright and browser binaries are later candidates beyond standard Go tests. Test-only status does not remove the need to review actual packages/browser distributions, licenses and Node compatibility before installation.
+
+<a id="security-references"></a>
+
+## 安全対策の参考候補 / Candidate security references
+
+以下は安全設計で使う予定の資料名です。今回の作業では開いておらず、URL・版・参照日は未記録です。L4-10で本人とassistantが実際に読み、版と参照日をここに記録してから、対策の根拠として引用します。それまでは[安全設計](architecture.md#security)の各項目は提案で、これらの資料に適合しているとは主張しません。
+
+These are the names of references the security design intends to use. They were not opened in this task, and no URL, edition or access date is recorded. In L4-10 the user and assistant read them, record edition and access date here, and only then cite them as the basis for a control. Until then every item in the [security design](architecture.md#security) is a proposal, and no conformance to these references is claimed.
+
+| 候補 / Candidate | 使う予定の場面 / Intended use |
+| --- | --- |
+| OWASP Top 10 | web applicationの主な危険の分類 / Classifying the main web application risks |
+| OWASP Application Security Verification Standard (ASVS) | S4-9の点検表の出発点 / Starting point for the S4-9 checklist |
+| OWASP Top 10 for LLM Applications | prompt injectionと記憶の汚染（S3-9） / Prompt injection and memory poisoning (S3-9) |
+| IPA「安全なウェブサイトの作り方」 | 日本語での対策の確認、研究UI（S7） / Checking controls in Japanese, and the research UI (S7) |
+| Go公式の脆弱性管理資料（`govulncheck`） / Go's official vulnerability-management documentation (`govulncheck`) | 依存の既知の脆弱性の確認（S2-1）。toolの導入は許可が必要 / Checking dependencies for known vulnerabilities (S2-1). Installing the tool needs authorization |
+
+利用者は2026-11-27に、日本で最近安全上の問題が深刻だと述べました。これは安全対策を強める動機として記録します。個別の事件は調査しておらず、本projectの文書では引用しません。
+
+On 2026-11-27 the user said that security problems have recently been serious in Japan. This is recorded as the motivation for stronger controls. No specific incident was researched, and project documents cite none.
 
 ## 配布manifestの必須情報 / Required distribution-manifest information
 

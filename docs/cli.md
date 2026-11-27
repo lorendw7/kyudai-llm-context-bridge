@@ -1,20 +1,20 @@
 # CLI設計 / CLI design
 
-更新 / Updated: 2026-11-27。利用者の報告では、教員の要件は「commandlineの形でAPIを提供し、UI画面は作らない」です。これを受けてReact研究UIの計画を取り下げ、本書が以前の研究UI設計に代わります。以下は提案で、CLIのcodeはまだありません。未決の点は[構成設計](architecture.md#open-questions)に載せ、利用者が決めます。
+更新 / Updated: 2026-11-27。利用者の報告によると、教員の方針は「まずcommandlineとAPIで検証し、その後にUIを加える」です。CLIはその検証のための入口で、他の人が書いたprogramも同じAPIを呼びます。研究UIは検証の後に加えます（[UI設計](ui.md)）。以下は提案で、CLIのcodeはまだありません。未決の点は[構成設計](architecture.md#open-questions)に載せ、利用者が決めます。
 
-According to the user, the supervisor requires the service to be offered as an API used from the command line, with no UI screen. The React research UI plan is therefore withdrawn, and this document replaces the earlier research UI design. Everything below is a proposal; no CLI code exists yet. Open points are listed in the [architecture](architecture.md#open-questions) for the user to decide.
+According to the user, the supervisor's direction is to verify through the command line and API first and add a UI afterwards. The CLI is the entry point for that verification, and programs written by other people call the same API. The research UI is added after verification (see the [UI design](ui.md)). Everything below is a proposal; no CLI code exists yet. Open points are listed in the [architecture](architecture.md#open-questions) for the user to decide.
 
-## 要件の読み方 / Reading the requirement
+## serviceとCLIの関係 / How the service and CLI relate
 
-「commandline形式のAPI」には三つの読み方があります。assistantの提案はA案です。どれが教員の意図に合うかは利用者が確認します。
+後でUIを加える方針なので、HTTP serviceは残します。CLI・runner・他の人のprogram・後の研究UIは、すべて同じ `/v1` を呼びます。比べた構成は次の三つで、A案を使います。
 
-"An API in command-line form" can be read three ways. The assistant proposes option A. The user confirms which one matches the supervisor's intent.
+Because a UI is added later, the HTTP service stays. The CLI, the runner, other people's programs and the later research UI all call the same `/v1`. Three layouts were compared, and option A is used.
 
 | 選択肢 / Option | 内容 / What it means | 利点と負担 / Benefit and cost |
 | --- | --- | --- |
-| **A · HTTP service + CLI（提案） / HTTP service + CLI (proposed)** | 既存の `/v1` serviceを保ち、人が使う入口をCLIだけにする。runnerとscriptも同じAPIを使う / Keep the existing `/v1` service and make the CLI the only human entry point. The runner and scripts use the same API | 受入済みのL1–L3とL4の設計をそのまま使える。serverとCLIの二つを起動する / Accepted L1–L3 code and the L4 design carry over unchanged. Two things run: the server and the CLI |
+| **A · HTTP service + CLI（採用） / HTTP service + CLI (used)** | 既存の `/v1` serviceを保ち、検証の間はCLIを人の入口にする。runner、他のprogram、後のUIも同じAPIを使う / Keep the existing `/v1` service with the CLI as the human entry point during verification. The runner, other programs and the later UI use the same API | 受入済みのL1–L3とL4の設計をそのまま使える。serverとCLIの二つを起動する / Accepted L1–L3 code and the L4 design carry over unchanged. Two things run: the server and the CLI |
 | B · HTTP APIのみ / HTTP API only | CLIを作らず、`curl` などで直接呼ぶ / No CLI; call the API with `curl` or similar | codeは最少。request IDの生成、状態照会、errorの読取りを毎回手で行う / Least code. Request IDs, status lookups and error reading are done by hand every time |
-| C · serviceなしのCLI / CLI without a service | 各commandがDBとmodelを直接操作する / Each command opens the database and calls the model itself | processが一つ減る。認証、所有者の隔離、session内の排他を作り直すことになり、受入済みのHTTP契約と推論資源の共有を失う / One process fewer. Authentication, owner isolation and per-session exclusion must be rebuilt, and the accepted HTTP contract and shared inference capacity are lost |
+| C · serviceなしのCLI / CLI without a service | 各commandがDBとmodelを直接操作する / Each command opens the database and calls the model itself | processが一つ減る。認証、所有者の隔離、session内の排他を作り直すことになり、後のUIと他のprogramが呼ぶAPIがなくなる / One process fewer. Authentication, owner isolation and per-session exclusion must be rebuilt, and the later UI and other programs would have no API to call |
 
 ## Command一覧 / Commands
 
@@ -54,9 +54,9 @@ No interactive `chat` loop (REPL) at first. One command per turn keeps the same 
 
 ## 次のモデル / Which model comes next
 
-2026-11-18に利用者は「同じ会話では直前に使ったモデルを引き継ぐ」案を選びました。CLIでもこの決定を保ちます。`--model` を省いた `send` は、そのsessionの最新の完了回答で使われたモデルを使います。完了回答がない場合と、そのモデルが許可一覧から外れた場合は送信せず、`--model` の指定を求めます。既定のモデルを黙って選ぶことはしません。
+2026-11-18に利用者は「同じ会話では直前に使ったモデルを引き継ぐ」案を選びました。CLIでも後の[研究UI](ui.md#next-model)でも同じ決定を使います。`--model` を省いた `send` は、そのsessionの最新の完了回答で使われたモデルを使います。完了回答がない場合と、そのモデルが許可一覧から外れた場合は送信せず、`--model` の指定を求めます。既定のモデルを黙って選ぶことはしません。
 
-On 2026-11-18 the user chose to keep the last model used in the same conversation. The CLI keeps that decision. A `send` without `--model` uses the model of the most recent completed reply in that session. With no completed reply, or when that model is no longer allowlisted, the CLI sends nothing and asks for `--model`. It never picks a default silently.
+On 2026-11-18 the user chose to keep the last model used in the same conversation. The CLI and the later [research UI](ui.md#next-model) both follow that decision. A `send` without `--model` uses the model of the most recent completed reply in that session. With no completed reply, or when that model is no longer allowlisted, the CLI sends nothing and asks for `--model`. It never picks a default silently.
 
 この値はserverの会話記録から毎回求め、手元のfileには保存しません。使ったモデルは回答と一緒に表示します。Bで訂正した直後に `--model` なしで送ればB、Aに戻すには `--model` でAを一度指定します。runnerと評価scriptは常に `--model` を明示します。
 
@@ -165,8 +165,8 @@ Each command is a `run(args, stdin, stdout, stderr)` function returning an exit 
 | 流れ / Flow | 同じsessionのA → B → A、二重送信、応答喪失後の再送、Ctrl+C後の続行、busy、取消 / A → B → A in one session, double submit, replay after a lost response, continuation after Ctrl+C, busy and cancellation |
 | binary（S2以降 / from S2） | buildしたbinaryを合成のmodel serverに対して起動し、同じ流れを通す / Launch the built binary against a synthetic model server and run the same flow |
 
-## 取り下げた範囲 / Withdrawn scope
+## 研究UIとの関係 / Relation to the research UI
 
-React + TypeScript + Vite + Mantineの研究UI、その配置図、browser test、第三者UI用の互換adapterは計画から外しました。以前の設計はGit履歴（`a40978e` まで）に残ります。公開 `website/` は研究を説明するための静的siteで、研究APIには接続しません。こちらは継続します。
+CLIで確かめた流れ（切替、二重送信、応答喪失後の回復、取消、出典、export、削除）は、後の研究UIがそのまま使うAPIの動作です。UIは同じ契約fixtureを使い、CLIの検証で固まった状態名・error code・回復の手順を変えません。UIで新しく必要になるのは、画面の状態管理と[browserでの安全対策](ui.md#browser-security)です。
 
-The React + TypeScript + Vite + Mantine research UI, its layout figure, browser tests and the compatibility adapter for third-party UIs are removed from the plan. The earlier design remains in Git history up to `a40978e`. The public `website/` is a static site that explains the research and does not connect to the research API; it continues.
+The flows verified through the CLI (switching, double submit, recovery after a lost response, cancellation, sources, export and deletion) are the API behavior the later research UI relies on. The UI uses the same contract fixtures and changes none of the state names, error codes or recovery steps settled during CLI verification. What the UI adds is view-state management and [browser security](ui.md#browser-security).

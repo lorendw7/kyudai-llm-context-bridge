@@ -95,9 +95,9 @@ The initial message API is a non-streaming job API. For a newly accepted request
 
 ### 再読込とexportの応答案 / Proposed reload and export responses
 
-**再読込（S1から） / Reload (from S1).** CLIの `session show --conversation` が `view=conversation` を指定した時に、metadata、会話順のturn（要求ID・要求model・状態・message参照）、対応するmessageを同じsnapshotで返す案です。進行中や回復待ちのturnも返します。CLIが送信応答と手元のIDを失っても、受理済みのturnをこの一覧から照会できます。受理の記録を確認できない間は自動送信せず、状態を再読込します。別所有者には従来通り不存在と同じ404を返します。既定の4項目は[既存のGETテスト](../cmd/bridge/session_get_http_test.go)で検証します。
+**再読込（S1から） / Reload (from S1).** CLIの `session show --conversation` や後の研究UIのChatが `view=conversation` を指定した時に、metadata、会話順のturn（要求ID・要求model・状態・message参照）、対応するmessageを同じsnapshotで返す案です。進行中や回復待ちのturnも返します。clientが送信応答と手元のIDを失っても、受理済みのturnをこの一覧から照会できます。受理の記録を確認できない間は自動送信せず、状態を再読込します。別所有者には従来通り不存在と同じ404を返します。既定の4項目は[既存のGETテスト](../cmd/bridge/session_get_http_test.go)で検証します。
 
-When the CLI's `session show --conversation` requests `view=conversation`, return metadata, turns in conversation order (request ID, requested model, state and message references) and their messages in one snapshot. Include active turns and those awaiting recovery. A CLI user who lost both the submission response and the request ID can find admitted work in this list and query it. While admission is uncertain, refresh status without automatically submitting. Foreign sessions retain the same 404 as missing sessions. The [existing GET test](../cmd/bridge/session_get_http_test.go) checks the four-field default.
+When the CLI's `session show --conversation` or the later research UI's Chat requests `view=conversation`, return metadata, turns in conversation order (request ID, requested model, state and message references) and their messages in one snapshot. Include active turns and those awaiting recovery. A client that lost both the submission response and the request ID can find admitted work in this list and query it. While admission is uncertain, refresh status without automatically submitting. Foreign sessions retain the same 404 as missing sessions. The [existing GET test](../cmd/bridge/session_get_http_test.go) checks the four-field default.
 
 **Exportと削除（S3） / Export and deletion (S3).** 完全exportは一つの所有sessionの正本snapshotと、同じ世代でその時点までに必要な記憶更新を反映した出典を含みます。全履歴では派生記憶は不要です。例として、12日から15日への訂正が記憶更新待ちなら409を返し、回復後に再取得します。workerが利用不能なら503です。Goは応答確定直前に所有scope・世代と対象版を再照合し、途中で削除が始まった場合は本文を返しません。削除完了は管理対象storeに適用され、既に利用者が保存したexportは手元に残ります。
 
@@ -163,9 +163,9 @@ Commit the move to `generating` before dispatching to the model. Commit the answ
 | `generating`、保存回答なし / No committed answer | `recovery_required` にして次送信を保留。照合しても結果を確定できない場合、所有者は既存reconcile操作で「回答なしで終了」を選べる。正本の回答が依然なく同じturnが回復待ちの場合だけ原子的に `failed` とし、実行結果不明の理由を残す。旧turnは再開せず、遅い結果を書き込ませない。その後の再試行は新IDで明示送信 / Hold new sends in `recovery_required`. If reconciliation cannot resolve the outcome, the owner may explicitly close the turn without an answer via reconcile. Atomically require that the same turn still awaits recovery and has no committed answer. Mark it `failed`, retain the unknown execution outcome and reject late writes to that turn. Any subsequent retry is an explicit new request ID |
 | 全履歴の `answer_saved` または `complete` / Full-history saved or complete | 保存回答を同じIDで返し、必要なら `answer_saved → complete` を確定。追加の推論は0回。派生記憶のある方式では未完了の記憶更新だけを照合（S3） / Return the committed answer under the same ID and finish `answer_saved → complete` if needed. Zero additional generations. For a policy with derived memory, reconcile outstanding memory work separately in S3 |
 
-error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、CLIはcodeをそのまま表示して[終了code](cli.md)に対応付けます。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。現行の実装はこのほかに、4096 bytes超のbodyへ413、routeにないmethodへ405、内部の生成・encode失敗へ500を返します。
+error envelopeは `code`, `request_id`, `retryable`, `state` を持ち、CLIはcodeをそのまま表示して[終了code](cli.md)に対応付け、後の研究UIはcodeを日英へ翻訳します。stack traceやprompt本文は返しません。401は認証失敗、他人のobjectは存在を漏らさない404、409は競合、422は不正要求、503は依存未準備を出発案とします。受理後の失敗はGETのturn状態で表します。現行の実装はこのほかに、4096 bytes超のbodyへ413、routeにないmethodへ405、内部の生成・encode失敗へ500を返します。
 
-The error envelope carries code, request_id, retryable and state; the CLI prints the code unchanged and maps it to an [exit code](cli.md). Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state. The current implementation also returns 413 for bodies over 4096 bytes, 405 for methods a route does not define and 500 for internal generation or encoding failures.
+The error envelope carries code, request_id, retryable and state; the CLI prints the code unchanged and maps it to an [exit code](cli.md), and the later research UI translates codes into JA/EN. Do not return stack traces or prompt text. Initial mappings: 401 authentication failure, 404 for others' objects without disclosing existence, 409 conflict, 422 invalid request, 503 dependency unavailable. Failures after acceptance are represented in the retrieved turn state. The current implementation also returns 413 for bodies over 4096 bytes, 405 for methods a route does not define and 500 for internal generation or encoding failures.
 
 <a id="l4-turn-design"></a>
 
@@ -220,9 +220,9 @@ Serialize state changes to settle races between the deadline, cancellation and a
 
 This requirement was reported by the user on 2026-11-27: programs written by other people must be able to call the same API. Of what follows, the authentication scheme, network reach and schema format are proposals listed among the [open questions](architecture.md#open-questions).
 
-APIはHTTPとUTF-8のJSONだけを使うので、HTTP clientを持つ言語ならどれからでも呼べます。言語ごとのSDKは要りません。CLIもrunnerも、この同じAPIを呼ぶclientの一つです。呼出しは次の4段階です。
+APIはHTTPとUTF-8のJSONだけを使うので、HTTP clientを持つ言語ならどれからでも呼べます。言語ごとのSDKは要りません。CLIもrunnerも後の研究UIも、この同じAPIを呼ぶclientの一つです。呼出しは次の4段階です。
 
-The API uses only HTTP and UTF-8 JSON, so any language with an HTTP client can call it. No per-language SDK is needed. The CLI and runner are simply two clients of this same API. A call has four steps.
+The API uses only HTTP and UTF-8 JSON, so any language with an HTTP client can call it. No per-language SDK is needed. The CLI, the runner and the later research UI are simply clients of this same API. A call has four steps.
 
 | 段階 / Step | 要求 / Request | 状態 / Status |
 | --- | --- | --- |
@@ -269,6 +269,6 @@ API schema、DB migration、worker protocol、policy、metricsには独立versio
 
 Version API schemas, DB migrations, worker protocol, policies and metrics independently. Define compatibility for additive fields and new versions for removals/semantic changes. Client-side type definitions do not validate real HTTP responses, so runtime boundary validation and contract fixtures are also required. L2 accepted the Go DTO and interface contracts. A machine-readable schema such as OpenAPI is proposed for the user to maintain alongside future HTTP API implementation; it is not an existing deliverable.
 
-互換追加は、旧consumerが無視できる任意response fieldに限定します。未知の重要request fieldは拒否し、新必須field、enum値、stateの意味の変更を自動的に互換としません。CLIが未知stateを受け取った場合は非互換を明示し、送信を止めます。HTTP・worker・clientのfixtureで同じ用語を確認します。
+互換追加は、旧consumerが無視できる任意response fieldに限定します。未知の重要request fieldは拒否し、新必須field、enum値、stateの意味の変更を自動的に互換としません。CLIやUIが未知stateを受け取った場合は非互換を明示し、送信を止めます。HTTP・worker・CLI・UIのfixtureで同じ用語を確認します。
 
-Compatible additions are optional response fields that older consumers can ignore. Reject unknown critical request fields, and do not assume new required fields, enum values or state meanings are compatible. A CLI receiving an unknown state reports incompatibility and blocks sending. HTTP, worker and client fixtures verify shared terminology.
+Compatible additions are optional response fields that older consumers can ignore. Reject unknown critical request fields, and do not assume new required fields, enum values or state meanings are compatible. A CLI or UI receiving an unknown state reports incompatibility and blocks sending. HTTP, worker, CLI and UI fixtures verify shared terminology.
